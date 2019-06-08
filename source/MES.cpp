@@ -38,7 +38,7 @@ MES::init_mes::init_mes() {
     L"ぱ", L"ぴ", L"ぷ", L"ぺ", L"ぽ", L"ア", L"イ", L"ウ", L"エ", L"オ", L"カ", L"キ", L"ク", L"ケ", L"コ", L"サ",
     L"シ", L"ス", L"セ", L"ソ", L"タ", L"チ", L"ツ", L"テ", L"ト", L"ナ", L"ニ", L"ヌ", L"ネ", L"ノ", L"ハ", L"ヒ",
     L"フ", L"ヘ", L"ホ", L"マ", L"ミ", L"ム", L"メ", L"モ", L"ヤ", L"ユ", L"ヨ", L"ラ", L"リ", L"ル", L"レ", L"ロ",
-    L"ワ", L"ヲ", L"ン", L"ア", L"イ", L"ウ", L"エ", L"オ", L"ャ", L"ュ", L"ョ", L"ッ", L"ガ", L"ギ", L"グ", L"ゲ",
+    L"ワ", L"ヲ", L"ン", L"ｧ", L"ｨ", L"ｩ", L"ｪ", L"ｫ", L"ャ", L"ュ", L"ョ", L"ッ", L"ガ", L"ギ", L"グ", L"ゲ",
     L"ゴ", L"ザ", L"ジ", L"ズ", L"ゼ", L"ゾ", L"ダ", L"ヂ", L"ヅ", L"デ", L"ド", L"バ", L"ビ", L"ブ", L"ベ", L"ボ",
     L"ヴ", L"パ", L"ピ", L"プ", L"ペ", L"ポ", L"+", L"×", L".", L"○", L"?", L"!", L"●", L"♂", L"♀", L"·",
     L"—", L"&", L"/", L"♪", L"☆", L"★", L"♥", L"%", L"a", L"b", L"c", L"d", L"e", L"f", L"g", L"h",
@@ -52,23 +52,28 @@ MES::init_mes::init_mes() {
     MES::displaylist[i] = display[i];
     MES::displaymap.insert(std::pair<std::wstring, size_t>(display[i], i));
   }
-  for (size_t i = sizeof(display)/sizeof(display[0]); i < 512; ++i) {
-    std::wstringstream ss(L"{SYMBOL-");
-    ss << i << L"}";
+  for (size_t i = sizeof(display)/sizeof(display[0]); i < 0x1000; ++i) {
+    std::wstringstream ss;
+    ss << L"{SYMBOL-" << i << L"}";
     MES::displaylist.push_back(ss.str());
     MES::displaymap.insert(std::pair<std::wstring, size_t>(ss.str(), i));
   }
 
   std::wstring const ops[] = {
-    L"ENDPAGE", L"COLOR", L"LOCATION", L"PEOPLE", L"PREVINPUT", L"ITEM",
-    L"ORDER", L"VAR", L"GOLD", L"STRUCT", L"PAUSE", L"SOUND", L"SOUND2",
-    L"SOUND3", L"CHOICEYN", L"CHOICE", L"FACE"
+    L"ENDPAGE", L"COLOR", L"LOCATION", L"PEOPLE", L"PREVINPUT",
+    L"ITEM", L"ORDER", L"VAR", L"GOLD", L"STRUCTURE",
+    L"PAUSE", L"SOUND", L"SOUND2", L"SOUND3", L"CHOICEYN",
+    L"CHOICE", L"FACE", L"UNKNOWN1", L"UNKNOWN2", L"UNKNOWN3",
+    L"SYMBOL", L"UNKNOWN4", L"UNKNOWN5", L"UNKNOWN6", L"UNKNOWN7",
+    L"UNKNOWN8", L"UNKNOWN9", L"UNKNOWN10", L"COLORRGBA"
   };
 
   size_t const opnum[] = {
     0x03, 0x10, 0x14, 0x20, 0x21, 0x25, 0x27, 0x29, 0x2a, 0x2b,
-    0x30, 0x32, 0x34, 0x35, 0x40, 0x41, 0x50
+    0x30, 0x32, 0x34, 0x35, 0x40, 0x41, 0x50, 0x36, 0x38, 0x2c,
+    0x80, 0x26, 0x52, 0x18, 0x37, 0x33, 0x26, 0x28, 0x16
   };
+  
   MES::oplist.resize(256);
   for (size_t i = 0; i < sizeof(ops)/sizeof(ops[0]); ++i) {
     MES::oplist[opnum[i]] = ops[i];
@@ -76,7 +81,7 @@ MES::init_mes::init_mes() {
   }
 
   for (size_t i = 0x11; i <= 0x17; ++i)
-    if (i != 0x14)
+    if (i != 0x14 && i != 0x16)
       MES::opmap.insert(std::pair<std::wstring, size_t>(L"COLOR", i));
 }
 
@@ -118,14 +123,14 @@ std::wstring toUpper(std::wstring const& str) {
 
 char const bytelen[] = {
   1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 4u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  2u, 2u, 1u, 1u, 1u, 3u, 1u, 3u, 1u, 2u, 3u, 2u, 1u, 1u, 1u, 1u,
-  1u, 1u, 3u, 3u, 2u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
+  1u, 1u, 1u, 1u, 4u, 1u, 5u, 1u, 2u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
+  2u, 2u, 1u, 1u, 1u, 3u, 3u, 3u, 3u, 2u, 3u, 2u, 3u, 1u, 1u, 1u,
+  1u, 1u, 3u, 3u, 3u, 2u, 2u, 5u, 2u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
   2u, 3u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  4u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
+  4u, 1u, 7u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
   1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
   1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  2u, 2u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
+  2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u,
   1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
   1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
   1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
@@ -137,14 +142,14 @@ char const bytelen[] = {
 
 char const numparams[] = {
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  1u, 1u, 1u, 1u, 3u, 1u, 1u, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  1u, 1u, 0u, 0u, 0u, 2u, 0u, 2u, 0u, 1u, 2u, 1u, 0u, 0u, 0u, 0u,
-  0u, 0u, 2u, 2u, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+  1u, 1u, 1u, 1u, 3u, 1u, 4u, 1u, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+  1u, 1u, 0u, 0u, 0u, 2u, 2u, 2u, 2u, 1u, 2u, 1u, 2u, 0u, 0u, 0u,
+  0u, 0u, 2u, 2u, 2u, 1u, 1u, 4u, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
   1u, 2u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  3u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+  3u, 0u, 6u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
@@ -153,6 +158,9 @@ char const numparams[] = {
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
   0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u
 };
+
+const size_t MAX_INST_SIZE = 7;
+const size_t MAX_PARAM_SIZE = 6;
 
 std::wstring wprintNum(int v) {
   bool neg = (v < 0);
@@ -242,7 +250,7 @@ bool MES::readMES(std::ifstream& infile) {
               message.append(1, L' ');
               break;
             case 0x10: case 0x11: case 0x12: case 0x13:
-            case 0x15: case 0x16: case 0x17:
+            case 0x15: case 0x17:
               message.append(L"{COLOR-").append(getColor(opToCol[op - 0x10])).append(1, L'}');
               break;
             case 0x20:
@@ -251,9 +259,12 @@ bool MES::readMES(std::ifstream& infile) {
             case 0x2b:
               message.append(L"{STRUCTURE-").append(getStructureName(buffer[buffer_ofs])).append(1, L'}');
               break;
-            case 0x81:
-            case 0x80:{
-              size_t charidx = ((buffer[buffer_ofs] & 0xff) | op << 8) & 0x1ff;
+            case 0x80: case 0x81: case 0x82: case 0x83:
+            case 0x84: case 0x85: case 0x86: case 0x87:
+            case 0x88: case 0x89: case 0x8a: case 0x8b:
+            case 0x8c: case 0x8d: case 0x8e: case 0x8f:
+            {
+              size_t charidx = ((buffer[buffer_ofs] & 0xff) | op << 8) & 0xfff;
               message.append(MES::displaylist[charidx]);
               break;
             }
@@ -285,8 +296,10 @@ bool MES::readMES(std::ifstream& infile) {
   return result;
 }
 
+const bool SEQ_DEDUPE = true;
+
 void MES::writeMES(std::ofstream& outfile) const {
-  const size_t BUFFER_MAX = 4096 - (4 + 5);
+  const size_t BUFFER_MAX = 4096 - (4 + MAX_INST_SIZE + 1);
   char buffer[4096];
   buffer[0] = 0xcd;
   buffer[1] = 0xc3;
@@ -302,110 +315,137 @@ void MES::writeMES(std::ofstream& outfile) const {
   size_t buffer_len = 0;
   outfile.seekp(data_ofs, std::ios::beg);
   size_t* offsets = new size_t[this->messages.size()];
-  std::wstring params[4];
+  std::wstring params[MAX_PARAM_SIZE];
   
+  size_t prev_data_ofs = data_ofs;
   for (size_t i = 0; i < this->messages.size(); ++i) {
-    offsets[i] = data_ofs;
     std::wstring const& message = this->messages[i];
-    for (size_t char_ofs = 0; char_ofs < message.size(); ++char_ofs) {
-      if (buffer_len > BUFFER_MAX) {
-        outfile.write(buffer, buffer_len);
-        buffer_len = 0;
-      }
-      wchar_t first_char = message[char_ofs];
-      if (first_char == L'{') {
-        if (std::isdigit(message[++char_ofs])) {
-          size_t eos = message.find(L'}', char_ofs);
-          std::wstring param = message.substr(char_ofs, eos - char_ofs);
-          if (isDigit(param)) {
-            buffer[buffer_len++] = std::stoi(param);
-            ++data_ofs;
-          } else {
-            
-          }
-        } else {
-          size_t opstart = char_ofs;
-          while (message[char_ofs] != L'}' && message[char_ofs] != L'-') {
-            ++char_ofs;
-          }
-          std::wstring opstr = message.substr(opstart, char_ofs - opstart);
-          std::unordered_map<std::wstring, size_t>::iterator it = opmap.find(opstr);
-          if (it != opmap.end()) {
-            size_t op = it->second;
-            size_t size = bytelen[op];
-            size_t numops = 0;
-            buffer[buffer_len] = op;
-            while (numops < size - 1 && message[char_ofs] != '}') {
-              if (message[char_ofs] == '-')
-                ++char_ofs;
-              size_t param_start = char_ofs;
-              while (message[char_ofs] != '}' && message[char_ofs] != '-')
-                ++char_ofs;
-              std::wstring param = message.substr(param_start, char_ofs - param_start);
-              params[numops++] = param;
-            }
-            size_t expected_params = numparams[op];
-            if (numops < expected_params) {
-              // error insufficient params
+    bool dupe = (SEQ_DEDUPE && this->messages[i - 1] == message);
+    if (dupe) {
+      offsets[i] = prev_data_ofs;
+    } else {
+      offsets[i] = data_ofs;
+      prev_data_ofs = data_ofs;
+      for (size_t char_ofs = 0; char_ofs < message.size(); ++char_ofs) {
+        if (buffer_len > BUFFER_MAX) {
+          outfile.write(buffer, buffer_len);
+          buffer_len = 0;
+        }
+        wchar_t first_char = message[char_ofs];
+        if (first_char == L'{') {
+          size_t first_bracket = char_ofs;
+          if (std::isdigit(message[++char_ofs])) {
+            size_t eos = message.find(L'}', char_ofs);
+            std::wstring param = message.substr(char_ofs, eos - char_ofs);
+            if (isDigit(param)) {
+              buffer[buffer_len++] = std::stoi(param);
+              ++data_ofs;
             } else {
-              switch (op) {
-                case 0x10: case 0x11: case 0x12: case 0x13:
-                case 0x15: case 0x16: case 0x17:{
-                  size_t index = getColor(params[0]);
-                  buffer[buffer_len++] = 0x10 + colToOp[index];
-                  break;}
-                case 0x20:{
-                  size_t index = MES::getPeopleIndex(params[0]);
-                  buffer[buffer_len++] = index;
-                  break;}
-                case 0x2b:{
-                  size_t index = MES::getStructureIndex(params[0]);
-                  buffer[buffer_len++] = index;
-                  break;}
-                default:
-                  for (size_t i = 1; i <= numops; ++i) {
-                    buffer[buffer_len + i] += std::stoi(params[i - 1]);
-                  }
+              
+            }
+            char_ofs = eos;
+          } else {
+            size_t opstart = char_ofs;
+            while (message[char_ofs] != L'}' && message[char_ofs] != L'-') {
+              ++char_ofs;
+            }
+            std::wstring opstr = message.substr(opstart, char_ofs - opstart);
+            std::unordered_map<std::wstring, size_t>::iterator it = opmap.find(opstr);
+            if (it != opmap.end()) {
+              size_t op = it->second;
+              size_t size = bytelen[op];
+              size_t numops = 0;
+              buffer[buffer_len] = op;
+              size_t expected_params = numparams[op];
+              while (numops < expected_params && message[char_ofs] != '}') {
+                if (message[char_ofs] == '-')
+                  ++char_ofs;
+                size_t param_start = char_ofs;
+                while (message[char_ofs] != '}' && message[char_ofs] != '-')
+                  ++char_ofs;
+                std::wstring param = message.substr(param_start, char_ofs - param_start);
+                params[numops++] = param;
+              }
+
+              if (numops < expected_params) {
+                // error insufficient params
+              } else {
+                switch (op) {
+                  case 0x10: case 0x11: case 0x12: case 0x13:
+                  case 0x15: case 0x17:{
+                    size_t index = getColor(params[0]);
+                    buffer[buffer_len] = 0x10 + colToOp[index];
+                    break;}
+                  case 0x20:{
+                    size_t index = MES::getPeopleIndex(params[0]);
+                    buffer[buffer_len + 1] = index;
+                    break;}
+                  case 0x2b:{
+                    size_t index = MES::getStructureIndex(params[0]);
+                    buffer[buffer_len + 1] = index;
+                    break;}
+                  case 0x80:{
+                    size_t index = std::stoi(params[0]);
+                    buffer[buffer_len] |= index >> 8 & 0x0f;
+                    buffer[buffer_len + 1] = index;
+                    break;}
+                  default:
+                    for (size_t i = 1; i < size; ++i) {
+                      buffer[buffer_len + i] = std::stoi(params[i - 1]);
+                    }
+                }
+              }
+              buffer_len += size;
+              data_ofs += size;
+            } else {
+              std::wstring skey;
+              skey.append(1, L'{').append(opstr).append(1, L'}');
+              it = MES::displaymap.find(skey);
+              if (it != MES::displaymap.end()) {
+                size_t index = it->second;
+                buffer[buffer_len] = 0x80 | (index >> 8 & 0x0f);
+                buffer[buffer_len + 1] = index;
+                buffer_len += 2;
+                data_ofs += 2;
+              } else {
+                // error unrecognized op
               }
             }
-            buffer_len += size;
-            data_ofs += size;
+          }
+          
+          size_t last_bracket = message.find(L'}', first_bracket + 2);
+          char_ofs = last_bracket;
+        } else {
+          if (first_char == L' ') {
+            buffer[buffer_len++] = 0x02;
+            ++data_ofs;
+          } else if (first_char == L'\n') {
+            buffer[buffer_len++] = 0x01;
+            ++data_ofs;
           } else {
-            it = MES::displaymap.find(opstr);
+            std::wstring ws(1, first_char);
+            std::unordered_map<std::wstring, size_t>::iterator it = MES::displaymap.find(ws);
             if (it != MES::displaymap.end()) {
-              buffer[buffer_len++] = it->second;
-            } else {
-              // error unrecognized op
+              buffer[buffer_len] = 0x80 + (it->second >> 8 & 0x0f);
+              buffer[buffer_len + 1] = it->second;
+              buffer_len += 2;
+              data_ofs += 2;
+            } else { // invalid character
+              
             }
           }
         }
-      } else {
-        if (first_char == L' ') {
-          buffer[buffer_len++] = 0x02;
-        } else if (first_char == L'\n') {
-          buffer[buffer_len++] = 0x01;
-        } else {
-          std::wstring ws(1, first_char);
-          std::unordered_map<std::wstring, size_t>::iterator it = MES::displaymap.find(ws);
-          if (it != MES::displaymap.end()) {
-            buffer[buffer_len] = 0x80 + (it->second >> 8);
-            buffer[buffer_len + 1] = it->second;
-            buffer_len += 2;
-          } else { // invalid character
-            
-          }
-        }
+      }
+      buffer[buffer_len++] = 0;
+      ++data_ofs;
+      while (data_ofs & 3) {
+        buffer[buffer_len++] = 0;
+        ++data_ofs;
       }
     }
-    buffer[buffer_len++] = 0;
-    while (buffer_len & 3)
-      buffer[buffer_len++] = 0;
   }
   if (buffer_len)
     outfile.write(buffer, buffer_len);
-
-  buffer[3] = buffer[2] = buffer[1] = buffer[0] = 0;
-  outfile.write(buffer, 4);
   
   outfile.seekp(8, std::ios::beg);
   buffer_len = 0;

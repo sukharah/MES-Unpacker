@@ -5,7 +5,7 @@ int main(int argc, char** argv) {
     std::string command(argv[1]);
     if ("unpack" == command) {
       std::ifstream infile;
-      infile.open(argv[2], std::ios_base::out | std::ios_base::binary);
+      infile.open(argv[2], std::ios_base::in | std::ios_base::binary);
       if (infile) {
         std::wofstream outfile;
         outfile.open(argv[3]);
@@ -18,10 +18,10 @@ int main(int argc, char** argv) {
         } else {
           std::cout << "Could not open file " << argv[3] << " for writing" << std::endl;
         }
+        infile.close();
       } else {
         std::cout << "Could not open file " << argv[2] << " for reading" << std::endl;
       }
-      infile.close();
     } else if ("pack" == command) {
       std::wifstream infile;
       infile.open(argv[2]);
@@ -37,10 +37,10 @@ int main(int argc, char** argv) {
         } else {
           std::cout << "Could not open file " << argv[3] << " for writing" << std::endl;
         }
+        infile.close();
       } else {
         std::cout << "Could not open file " << argv[2] << " for reading" << std::endl;
       }
-      infile.close();
     } else if ("retext" == command) {
       std::wifstream infile;
       infile.open(argv[2]);
@@ -57,13 +57,13 @@ int main(int argc, char** argv) {
         } else {
           std::cout << "Could not open file " << argv[3] << " for writing" << std::endl;
         }
+        infile.close();
       } else {
         std::cout << "Could not open file " << argv[2] << " for reading" << std::endl;
       }
-      infile.close();
     } else if ("repack" == command) {
       std::ifstream infile;
-      infile.open(argv[2]);
+      infile.open(argv[2], std::ios_base::in | std::ios_base::binary); // out
       if (infile) {
         std::ofstream outfile;
         outfile.open(argv[3], std::ios_base::out | std::ios_base::binary);
@@ -75,10 +75,10 @@ int main(int argc, char** argv) {
         } else {
           std::cout << "Could not open file " << argv[3] << " for writing" << std::endl;
         }
+        infile.close();
       } else {
         std::cout << "Could not open file " << argv[2] << " for reading" << std::endl;
       }
-      infile.close();
     } else {
       std::cout << "Unrecognized command: " << command << std::endl;
     }
