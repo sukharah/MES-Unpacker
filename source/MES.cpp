@@ -6,6 +6,12 @@
 #include <algorithm>
 #include <utility>
 
+#ifdef DUPE
+const bool SEQ_DEDUPE = true;
+#else
+const bool SEQ_DEDUPE = false;
+#endif
+
 std::unordered_map<std::wstring, size_t> MES::displaymap;
 std::unordered_map<std::wstring, size_t> MES::peoplemap;
 std::unordered_map<std::wstring, size_t> MES::structuremap;
@@ -296,8 +302,6 @@ bool MES::readMES(std::ifstream& infile) {
   return result;
 }
 
-const bool SEQ_DEDUPE = true;
-
 void MES::writeMES(std::ofstream& outfile) const {
   const size_t BUFFER_MAX = 4096 - (4 + MAX_INST_SIZE + 1);
   char buffer[4096];
@@ -542,7 +546,7 @@ void MES::loadMES(std::string const& filepath, std::vector<std::wstring>& mlist,
 
 void MES::loadPeople() {
   if (MES::use_people_names && MES::peoplemap.empty() && !MES::load_people_failed) {
-    MES::loadMES("people.mes", MES::peoplelist, MES::peoplemap, MES::load_people_failed);
+    MES::loadMES("./people.mes", MES::peoplelist, MES::peoplemap, MES::load_people_failed);
     if (MES::load_people_failed)
       MES::use_people_names = false;
   }
@@ -550,7 +554,7 @@ void MES::loadPeople() {
 
 void MES::loadStructures() {
   if (MES::use_structure_names && MES::structuremap.empty() && !MES::load_structures_failed) {
-    MES::loadMES("structure.mes", MES::structurelist, MES::structuremap, MES::load_structures_failed);
+    MES::loadMES("./structure.mes", MES::structurelist, MES::structuremap, MES::load_structures_failed);
     if (MES::load_structures_failed)
       MES::use_structure_names = false;
   }
