@@ -14,6 +14,9 @@ The minimal command line for g++ for this program:
 g++ -std=c++11 -iquote header "source/main.cpp" "source/MES.cpp"
 ```
 
+To allow the program to perform sequential deduplication of generated MES files,
+add the `-DDUPE` compiler flag.
+
 ## To run
 The program takes 3 parameters, and exposes the following two functions
 
@@ -27,10 +30,13 @@ To generate an MES file from the text file
 program.exe pack "./textinputfile.txt" "./mesoutputfile.mes"
 ```
 
+If structure.mes/people.mes files are located in the program directory,
+generated text files will use names extracted from those files for the STRUCTURE/PEOPLE
+bytecodes.
+
 ## Additional development
 
 Planned features/fixes:
-- Add support for structure/item names in place of id numbers.
 - Add support for other parameter formats for bytecode entities.
 - Add names for 'unknown' bytecode instructions.
 - Add error messages.
