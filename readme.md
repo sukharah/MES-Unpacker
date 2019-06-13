@@ -30,15 +30,19 @@ To generate an MES file from the text file
 program.exe pack "./textinputfile.txt" "./mesoutputfile.mes"
 ```
 
-If structure.mes/people.mes files are located in the program directory,
-generated text files will use names extracted from those files for the STRUCTURE/PEOPLE
-bytecodes.
+The following list of files can be placed in the program directory to enable names for the associated instructions:
+
+```
+structure.mes   STRUCTURE
+people.mes      PEOPLE
+item.mes        ITEM
+farmcrop.mes    CROP
+SFXList.txt     PLAYSFX
+```
 
 ## Additional development
 
 Planned features/fixes:
-- Add support for other parameter formats for bytecode entities.
-- Add names for 'unknown' bytecode instructions.
 - Add error messages.
 - Add additional printable characters from font table.
 - Verify behavior with source, add any bytecodes not in test set.
