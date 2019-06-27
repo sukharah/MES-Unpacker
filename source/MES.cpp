@@ -33,82 +33,16 @@ std::vector<unsigned char> MES::opparamnum;
 std::vector<unsigned char> MES::opparamofs;
 std::vector<unsigned char> MES::opparamtypes;
 
-/*
-std::unordered_map<std::wstring, size_t> MES::peoplemap;
-std::unordered_map<std::wstring, size_t> MES::structuremap;
-std::unordered_map<std::wstring, size_t> MES::itemmap;
-std::unordered_map<std::wstring, size_t> MES::cropmap;
-std::unordered_map<std::wstring, size_t> MES::colormap;
-std::unordered_map<std::wstring, size_t> MES::sfxmap;
-*/
 std::unordered_map<std::wstring, size_t> MES::opmap;
 
 std::vector<std::wstring> MES::displaylist;
 std::vector<std::wstring> MES::singlelist;
-/*
-std::vector<std::wstring> MES::peoplelist;
-std::vector<std::wstring> MES::structurelist;
-std::vector<std::wstring> MES::itemlist;
-std::vector<std::wstring> MES::croplist;
-std::unordered_map<size_t, std::wstring> MES::sfxlist;*/
 
 std::vector<std::wstring> MES::oplist;
 
 std::unordered_map<size_t, std::wstring> MES::op2color;
 std::unordered_map<std::wstring, size_t> MES::color2op;
 
-/*
-bool MES::load_people_failed = false;
-bool MES::load_structures_failed = false;
-bool MES::load_items_failed = false;
-bool MES::load_crops_failed = false;
-bool MES::load_sfxs_failed = false;
-
-bool MES::use_people_names = true;
-bool MES::use_structure_names = true;
-bool MES::use_item_names = true;
-bool MES::use_crop_names = true;
-bool MES::use_color_names = true;
-bool MES::use_sfx_names = true;
-
-char const bytelen[] = {
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 4u, 1u, 5u, 1u, 2u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  2u, 2u, 1u, 1u, 1u, 3u, 3u, 3u, 3u, 2u, 3u, 2u, 3u, 1u, 1u, 1u,
-  1u, 1u, 3u, 3u, 3u, 2u, 2u, 5u, 2u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  2u, 3u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  4u, 1u, 5u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u, 2u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u
-};
-
-char const numparams[] = {
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  1u, 1u, 1u, 1u, 3u, 1u, 1u, 1u, 1u, 1u, 0u, 0u, 0u, 0u, 0u, 0u,
-  1u, 1u, 0u, 0u, 0u, 1u, 1u, 2u, 1u, 1u, 2u, 1u, 2u, 0u, 0u, 0u,
-  0u, 0u, 1u, 1u, 1u, 1u, 1u, 4u, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  1u, 2u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  3u, 0u, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
-  0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u
-};
-*/
 // base param types
 size_t const PARAM_BYTE = 0,
              PARAM_SHORT = 1,
@@ -117,197 +51,8 @@ size_t const PARAM_BYTE = 0,
              PARAM_INT = 4,
              PARAM_SYMBOL = 5;
 size_t const PARAM_INDEX = PARAM_SYMBOL + 1;
-/*
-size_t const paramtypes[] = {
-  // 0x00 EOM
-  // 0x01 newline
-  // 0x02 space
-  // 0x03 {ENDPAGE}
-  // 0x04-0x0f undefined
-  // 0x10 {COLOR-0}
-  PARAM_COLORID,
-  // 0x11 {COLOR-1} // blue?
-  PARAM_COLORID,
-  // 0x12 {COLOR-RED} // 2
-  PARAM_COLORID,
-  // 0x13 {COLOR-GREEN} // 3
-  PARAM_COLORID,
-  // 0x14 LOCATION
-  PARAM_BYTE, PARAM_BYTE, PARAM_BYTE,
-  // 0x15 undefined
-  PARAM_COLORID, // ?
-  // 0x16 {COLORRGBA-0x00000000}
-  PARAM_RGBA,
-  // 0x17 {COLOR-BLACK} // 6
-  PARAM_COLORID,
-  // 0x18 OP18
-  PARAM_BYTE,
-  // 0x19 OP19
-  PARAM_BYTE,
-  // 0x1a-0x1f undefined
-  // 0x20 {PEOPLE
-  PARAM_PEOPLEID,
-  // 0x21 {PREVINPUT
-  PARAM_BYTE,
-  // 0x22 undefined
-  // 0x23 OP23
-  // 0x24 OP24
-  // 0x25 ITEM
-  PARAM_ITEMID,
-  // 0x26 CROP
-  PARAM_CROPID,
-  // 0x27 ORDER
-  PARAM_BYTE, PARAM_BYTE,
-  // 0x28 OP28
-  PARAM_SHORT,
-  // 0x29 VAR
-  PARAM_BYTE,
-  // 0x2a GOLD
-  PARAM_BYTE, PARAM_BYTE,
-  // 0x2b STRUCTURE
-  PARAM_STRUCTUREID,
-  // 0x2c OP2C
-  PARAM_BYTE, PARAM_BYTE,
-  // 0x2d OP2D
-  // 0x2e-0x2f undefined
-  // 0x30 PAUSE
-  // 0x31 OP31
-  // 0x32 WAIT
-  PARAM_SHORT,
-  // 0x33 OP33
-  PARAM_SHORT,
-  // 0x34 PLAYSFX
-  PARAM_SFXID,
-  // 0x35 TEXTSOUND
-  PARAM_BYTE,
-  // 0x36 OP36
-  PARAM_BYTE,
-  // 0x37 OP37
-  PARAM_BYTE, PARAM_BYTE, PARAM_BYTE, PARAM_BYTE,
-  // 0x38 OP38
-  PARAM_BYTE,
-  // 0x39 OP39
-  // 0x3a-0x3f undefined
-  // 0x40 CHOICEYN
-  PARAM_BYTE,
-  // 0x41 CHOICE
-  PARAM_BYTE, PARAM_BYTE,
-  // 0x42-0x4f undefined
-  // 0x50 FACE
-  PARAM_BYTE, PARAM_BYTE, PARAM_BYTE,
-  // 0x51 undefined
-  // 0x52 OP52
-  PARAM_INT,
-  // 0x53-0x7f undefined
-  // 0x80 SYMBOL
-  PARAM_SYMBOL,
-  // 0x81 SYMBOL
-  PARAM_SYMBOL,
-  // 0x82 SYMBOL
-  PARAM_SYMBOL,
-  // 0x83 SYMBOL
-  PARAM_SYMBOL,
-  // 0x84 SYMBOL
-  PARAM_SYMBOL,
-  // 0x85 SYMBOL
-  PARAM_SYMBOL,
-  // 0x86 SYMBOL
-  PARAM_SYMBOL,
-  // 0x87 SYMBOL
-  PARAM_SYMBOL,
-  // 0x88 SYMBOL
-  PARAM_SYMBOL,
-  // 0x89 SYMBOL
-  PARAM_SYMBOL,
-  // 0x8a SYMBOL
-  PARAM_SYMBOL,
-  // 0x8b SYMBOL
-  PARAM_SYMBOL,
-  // 0x8c SYMBOL
-  PARAM_SYMBOL,
-  // 0x8d SYMBOL
-  PARAM_SYMBOL,
-  // 0x8e SYMBOL
-  PARAM_SYMBOL,
-  // 0x8f SYMBOL
-  PARAM_SYMBOL
-  // 0x90-0xff undefined
-};
 
-size_t paramtypeofs[256];
-
-MES::init_mes MES::init; // static init
-
-MES::init_mes::init_mes() {
-  std::wstring const display[] = {
-    L"0", L"1", L"2", L"3", L"4", L"5", L"6", L"7", L"8", L"9", L"-", L"A", L"B", L"C", L"D", L"E",
-    L"F", L"G", L"H", L"I", L"J", L"K", L"L", L"M", L"N", L"O", L"P", L"Q", L"R", L"S", L"T", L"U",
-    L"V", L"W", L"X", L"Y", L"Z", L"あ", L"い", L"う", L"え", L"お", L"か", L"き", L"く", L"け", L"こ", L"さ",
-    L"し", L"す", L"せ", L"そ", L"た", L"ち", L"つ", L"て", L"と", L"な", L"に", L"ぬ", L"ね", L"の", L"は", L"ひ",
-    L"ふ", L"へ", L"ほ", L"ま", L"み", L"む", L"め", L"も", L"や", L"ゆ", L"よ", L"ら", L"り", L"る", L"れ", L"ろ",
-    L"わ", L"を", L"ん", L"ぁ", L"ぃ", L"ぅ", L"ぇ", L"ぉ", L"ゃ", L"ゅ", L"ょ", L"っ", L"が", L"ぎ", L"ぐ", L"げ",
-    L"ご", L"ざ", L"じ", L"ず", L"ぜ", L"ぞ", L"だ", L"ぢ", L"づ", L"で", L"ど", L"ば", L"び", L"ぶ", L"べ", L"ぼ",
-    L"ぱ", L"ぴ", L"ぷ", L"ぺ", L"ぽ", L"ア", L"イ", L"ウ", L"エ", L"オ", L"カ", L"キ", L"ク", L"ケ", L"コ", L"サ",
-    L"シ", L"ス", L"セ", L"ソ", L"タ", L"チ", L"ツ", L"テ", L"ト", L"ナ", L"ニ", L"ヌ", L"ネ", L"ノ", L"ハ", L"ヒ",
-    L"フ", L"ヘ", L"ホ", L"マ", L"ミ", L"ム", L"メ", L"モ", L"ヤ", L"ユ", L"ヨ", L"ラ", L"リ", L"ル", L"レ", L"ロ",
-    L"ワ", L"ヲ", L"ン", L"ｧ", L"ｨ", L"ｩ", L"ｪ", L"ｫ", L"ャ", L"ュ", L"ョ", L"ッ", L"ガ", L"ギ", L"グ", L"ゲ",
-    L"ゴ", L"ザ", L"ジ", L"ズ", L"ゼ", L"ゾ", L"ダ", L"ヂ", L"ヅ", L"デ", L"ド", L"バ", L"ビ", L"ブ", L"ベ", L"ボ",
-    L"ヴ", L"パ", L"ピ", L"プ", L"ペ", L"ポ", L"+", L"×", L".", L"○", L"?", L"!", L"●", L"♂", L"♀", L"·",
-    L"—", L"&", L"/", L"♪", L"☆", L"★", L"♥", L"%", L"a", L"b", L"c", L"d", L"e", L"f", L"g", L"h",
-    L"i", L"j", L"k", L"l", L"m", L"n", L"o", L"p", L"q", L"r", L"s", L"t", L"u", L"v", L"w", L"x",
-    L"y", L"z", L"'", L"<", L">", L"(", L")", L"｢", L"｣", L"~", L"*", L"{SPACE2}", L"{SPACE3}", L"ä", L"ö", L"ü",
-
-    L"Ä", L"Ö", L"Ü", L"β", L"\"", L",", L":"
-  };
-  MES::displaylist.resize(sizeof(display)/sizeof(display[0]));
-  for (size_t i = 0; i < sizeof(display)/sizeof(display[0]); ++i) {
-    MES::displaylist[i] = display[i];
-    MES::displaymap.insert(std::pair<std::wstring, size_t>(display[i], i));
-  }
-  for (size_t i = sizeof(display)/sizeof(display[0]); i < 0x1000; ++i) {
-    std::wstringstream ss;
-    ss << L"{SYMBOL-" << i << L"}";
-    MES::displaylist.push_back(ss.str());
-    MES::displaymap.insert(std::pair<std::wstring, size_t>(ss.str(), i));
-  }
-
-  std::wstring const ops[] = {
-    L"ENDPAGE", L"COLOR", L"LOCATION", L"COLORRGBA", L"OP18", L"OP19",
-    L"PEOPLE", L"PREVINPUT", L"OP23", L"OP24", L"ITEM", L"CROP",
-    L"ORDER", L"OP28", L"VAR", L"GOLD", L"STRUCTURE", L"OP2C",
-    L"OP2D", L"PAUSE", L"OP31", L"WAIT", L"OP33", L"PLAYSFX",
-    L"TEXTSOUND", L"OP36", L"OP37", L"OP38", L"OP39", L"CHOICEYN",
-    L"CHOICE", L"FACE", L"OP52", L"SYMBOL"
-  };
-
-  size_t const opnum[] = {
-    0x03, 0x10, 0x14, 0x16, 0x18, 0x19,
-    0x20, 0x21, 0x23, 0x24, 0x25, 0x26,
-    0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c,
-    0x2d, 0x30, 0x31, 0x32, 0x33, 0x34,
-    0x35, 0x36, 0x37, 0x38, 0x39, 0x40,
-    0x41, 0x50, 0x52, 0x80
-    
-  };
-    
-  MES::oplist.resize(256);
-  for (size_t i = 0; i < sizeof(ops)/sizeof(ops[0]); ++i) {
-    MES::oplist[opnum[i]] = ops[i];
-    MES::opmap.insert(std::pair<std::wstring, size_t>(ops[i], opnum[i]));
-  }
-
-  for (size_t i = 0x11; i <= 0x17; ++i)
-    if (i != 0x14 && i != 0x16)
-      MES::opmap.insert(std::pair<std::wstring, size_t>(L"COLOR", i));
-    
-  for (size_t o = 0, ofs = 0; o < 256; ++o) {
-    paramtypeofs[o] = ofs;
-    ofs += numparams[o];
-  }
-}
-*/
-
-// add hex?
+// add hex
 bool isNumber(std::wstring const& str, size_t ofs, size_t len) {
   return std::all_of(std::begin(str) + ofs, std::begin(str) + (ofs + len), [](wchar_t c){ return std::isdigit(c); });
 }
@@ -423,15 +168,6 @@ std::wstring wprintNum(int v) {
   std::reverse(std::begin(ws), std::end(ws));
   return ws;
 }
-/*
-size_t const opToCol[] = {
-  0, 1, 2, 3, 0, 4, 5, 6
-};
-
-size_t const colToOp[] = {
-  0, 1, 2, 3, 5, 6, 7
-};
-*/
 
 std::wstring getColor(size_t colnum) {
   std::unordered_map<size_t, std::wstring>::iterator it = MES::op2color.find(colnum);
@@ -489,7 +225,6 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
     size_t data_ofs = num_messages * 4 + 8;
     if (result) {
       for (size_t m = 0; result && m < num_messages; ++m) { // read the messages
-        //std::cout << "Processing message " << m << std::endl;
         if (data_ofs != offsets[m]) {
           if (offsets[m] < data_ofs && (data_ofs - offsets[m]) <= buffer_ofs) {
             buffer_ofs -= data_ofs - offsets[m];
@@ -505,13 +240,11 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
         bool eom = false;
         while (!eom) {
           if (!ensureBuffer(infile, buffer, sizeof(buffer), buffer_ofs, buffer_len, 1)) {
-            //std::cout << "Ensure failed for message head " << m << std::endl;
             result = false;
           }
           size_t op = buffer[buffer_ofs++] & 0xff;
           size_t required_length = MES::opsize[op] - 1;
           if (!ensureBuffer(infile, buffer, sizeof(buffer), buffer_ofs, buffer_len, required_length)) {
-            //std::cout << "Ensure failed for message " << m << std::endl;
             result = false;
           }
           
@@ -527,7 +260,6 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                 size_t symbolidx = (op << 8 | (buffer[buffer_ofs] & 0xff)) & 0x0fff;
                 if (!nospecial || (!MES::displaylist[symbolidx].empty() && MES::displaylist[symbolidx][0] != L'{')) {
                   message.append(MES::displaylist[symbolidx]);
-                  //std::cout << "SYMBOL " << symbolidx << narrow(MES::displaylist[symbolidx]) << " AT OFS " << (data_ofs + buffer_ofs) << std::endl;
                 }
               } else {
                 std::wstring const& opname = MES::oplist[op];
@@ -562,14 +294,11 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                       }
                     }
                   } else {
-                    //std::cout << "Adding op " << narrow(opname) << std::endl;
                     message.append(1, L'{').append(opname);
                     for (size_t paramidx = 0, buffer_rel = buffer_ofs; paramidx < num_params; ++paramidx) {
-                      //std::cout << "Getting param meta " << std::endl;
                       size_t paramtype = MES::opparamtypes[param_ofs + paramidx];
                       size_t param_size = MES::paramsize[paramtype];
                       message.append(1, L'-');
-                      //std::cout << "Adding parameter type " << paramtype << " at idx " << paramidx << std::endl;
                       switch (paramtype) {
                         case PARAM_BYTE:
                           message.append(wprintNum(buffer[buffer_rel++] & 0xff));
@@ -615,7 +344,6 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                       }
                     }
                     message.append(1, L'}');
-                    //std::cout << "Done with entity" << std::endl;
                   }
                 }
               }
@@ -625,7 +353,6 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
           buffer_ofs += required_length;
           data_ofs += required_length + 1;
         }
-        //std::cout << narrow(message) << std::endl;
         if (nospecial)
           makesafe(message);
         this->messages[m] = message;
@@ -943,43 +670,6 @@ void MES::loadMES(std::string const& filepath, std::vector<std::wstring>& mlist,
   }
 }
 
-/*
-void MES::loadPeople() {
-  if (MES::use_people_names && MES::peoplemap.empty() && !MES::load_people_failed) {
-    MES::use_people_names = false;
-    MES::loadMES("./people.mes", MES::peoplelist, MES::peoplemap, MES::load_people_failed);
-    if (!MES::load_people_failed)
-      MES::use_people_names = true;
-  }
-}
-
-void MES::loadStructures() {
-  if (MES::use_structure_names && MES::structuremap.empty() && !MES::load_structures_failed) {
-    MES::use_structure_names = false;
-    MES::loadMES("./structure.mes", MES::structurelist, MES::structuremap, MES::load_structures_failed);
-    if (!MES::load_structures_failed)
-      MES::use_structure_names = true;
-  }
-}
-
-void MES::loadItems() {
-  if (MES::use_item_names && MES::itemmap.empty() && !MES::load_items_failed) {
-    MES::use_item_names = false;
-    MES::loadMES("./item.mes", MES::itemlist, MES::itemmap, MES::load_items_failed);
-    if (!MES::load_items_failed)
-      MES::use_item_names = true;
-  }
-}
-
-void MES::loadCrops() {
-  if (MES::use_crop_names && MES::cropmap.empty() && !MES::load_crops_failed) {
-    MES::use_crop_names = false;
-    MES::loadMES("./farmcrop.mes", MES::croplist, MES::cropmap, MES::load_crops_failed);
-    if (!MES::load_crops_failed)
-      MES::use_crop_names = true;
-  }
-}
-*/
 void MES::loadList(std::string const& filepath, std::vector<std::wstring>& mlist, std::unordered_map<std::wstring, size_t>& mmap, bool& fail_flag) {
   std::ifstream sfxfile;
   sfxfile.open(filepath);
@@ -1003,184 +693,6 @@ void MES::loadList(std::string const& filepath, std::vector<std::wstring>& mlist
     fail_flag = true;
   }
 }
-/*
-std::wstring MES::getPeopleName(size_t index) {
-  MES::loadPeople();
-  
-  std::wstringstream ss;
-  
-  if (!MES::use_people_names || index >= MES::peoplelist.size()) {
-    ss << index;
-  } else {
-    ss << MES::peoplelist[index];
-  }
-  return ss.str();
-}
-
-size_t MES::getPeopleIndex(std::wstring const& name) {
-  bool dig = isNumber(name);
-  if (!dig)
-    MES::loadPeople();
-  
-  size_t index = 0;
-  if (dig) {
-    index = std::stoi(name);
-  } else {
-    std::wstring key = toUpper(trim(name));
-    std::unordered_map<std::wstring, size_t>::iterator it = MES::peoplemap.find(key);
-    if (it != MES::peoplemap.end()) {
-      index = it->second;
-    } else {
-      // error, people not found
-    }
-  }
-  return index;
-}
-
-std::wstring MES::getStructureName(size_t index) {
-  MES::loadStructures();
-  
-  std::wstringstream ss;
-  if (!MES::use_structure_names || index >= MES::structurelist.size()) {
-    ss << index;
-  } else {
-    ss << MES::structurelist[index];
-  }
-  return ss.str();
-}
-
-size_t MES::getStructureIndex(std::wstring const& name) {
-  bool dig = isNumber(name);
-  if (!dig)
-    MES::loadStructures();
-  
-  size_t index = 0;
-  if (dig) {
-    index = std::stoi(name);
-  } else {
-    std::wstring key = toUpper(trim(name));
-    std::unordered_map<std::wstring, size_t>::iterator it = MES::structuremap.find(key);
-    if (it != MES::structuremap.end()) {
-      index = it->second;
-    } else {
-      // error, structure not found
-    }
-  }
-  return index;
-}
-
-std::wstring MES::getItemName(size_t index) {
-  MES::loadItems();
-  
-  std::wstringstream ss;
-  if (!MES::use_item_names || index >= MES::itemlist.size()) {
-    ss << index;
-  } else {
-    ss << MES::itemlist[index];
-  }
-  return ss.str();
-}
-
-size_t MES::getItemIndex(std::wstring const& name) {
-  bool dig = isNumber(name);
-  if (!dig)
-    MES::loadItems();
-  
-  size_t index = 0;
-  if (dig) {
-    index = std::stoi(name);
-  } else {
-    std::wstring key = toUpper(trim(name));
-    std::unordered_map<std::wstring, size_t>::iterator it = MES::itemmap.find(key);
-    if (it != MES::itemmap.end()) {
-      index = it->second;
-    } else {
-      // error, item not found
-    }
-  }
-  return index;
-}
-
-std::wstring MES::getCropName(size_t index) {
-  MES::loadCrops();
-  
-  std::wstringstream ss;
-  if (!MES::use_crop_names || index >= MES::croplist.size()) {
-    ss << index;
-  } else {
-    ss << MES::croplist[index];
-  }
-  return ss.str();
-}
-
-size_t MES::getCropIndex(std::wstring const& name) {
-  bool dig = isNumber(name);
-  if (!dig)
-    MES::loadCrops();
-  
-  size_t index = 0;
-  if (dig) {
-    index = std::stoi(name);
-  } else {
-    std::wstring key = toUpper(trim(key));
-    std::unordered_map<std::wstring, size_t>::iterator it = MES::cropmap.find(key);
-    if (it != MES::cropmap.end()) {
-      index = it->second;
-    } else {
-      // error, crop not found
-    }
-  }
-  return index;
-}
-
-std::wstring MES::getSFXName(size_t index) {
-  MES::loadSFXs();
-  
-  std::wstringstream ss;
-  std::unordered_map<size_t, std::wstring>::iterator it = MES::sfxlist.find(index);
-  if (!MES::use_sfx_names || it == MES::sfxlist.end()) {
-    ss << index;
-  } else {
-    ss << it->second;
-  }
-  return ss.str();
-}
-
-size_t MES::getSFXIndex(std::wstring const& name) {
-  bool dig = isNumber(name);
-  if (!dig)
-    MES::loadSFXs();
-  
-  size_t index = 0;
-  if (dig) {
-    index = std::stoi(name);
-  } else {
-    std::wstring key = toUpper(trim(name));
-    std::unordered_map<std::wstring, size_t>::iterator it = MES::sfxmap.find(key);
-    if (it != MES::sfxmap.end()) {
-      index = it->second;
-    } else {
-      // error, sfx not found
-    }
-  }
-  return index;
-}
-
-void MES::strip() {
-  for (size_t m = 0; m < this->messages.size(); ++m) {
-    size_t sub = 0;
-    std::wstring& str = this->messages[m];
-    for (size_t o = 0; o < str.size(); ++o) {
-      wchar_t c = str[o];
-      if (c == L'-')
-        c = L' ';
-      str[o - sub] = c;
-      if (c == L'{' || c == L'}')
-        ++sub;
-    }
-    str.resize(str.size() - sub);
-  }
-}*/
 
 void MES::loadSymbols(std::wifstream& infile) {
   std::wstring line;
@@ -1189,7 +701,6 @@ void MES::loadSymbols(std::wifstream& infile) {
       wchar_t wc = line[i];
       if (wc == L'{') {
         size_t e = line.find_first_of(L'}', i + 2);
-        // if e == npos,
         if (e != std::string::npos) {
           std::wstring ws = line.substr(i, e + 1 - i);
           MES::displaymap.insert(std::pair<std::wstring, size_t>(ws, MES::displaylist.size()));
@@ -1214,7 +725,6 @@ void MES::loadSymbols(std::wifstream& infile) {
       }
     }
   }
-  //std::cout << "Loaded " << MES::displaylist.size() << " symbols" << std::endl;
   while (MES::displaylist.size() < 0x1000) {
     std::wstring ws = L"{SYMBOL-";
     ws.append(wprintNum(MES::displaylist.size())).append(1, L'}');
@@ -1393,7 +903,6 @@ void MES::init(std::wifstream& infile) {
                 MES::opsingle[opcode] = 2;
               }
             }
-            //std::cout << "OP " << opcode << " " << narrow(opname) << std::endl;
           } else
             state = 3;
           break;
@@ -1453,7 +962,6 @@ void MES::init(std::wifstream& infile) {
                 eofs = line.find_first_of(L' ', sofs + 1);
                 if (eofs == std::string::npos)
                   eofs = line.size();
-                //params.push_back(); // eh, just direct?
                 std::wstring paramname = line.substr(sofs, eofs - sofs);
                 std::unordered_map<std::wstring, size_t>::iterator it = MES::parammap.find(paramname);
                 if (it != MES::parammap.end()) { // ERROR: param name not found
@@ -1465,7 +973,6 @@ void MES::init(std::wifstream& infile) {
               }
               MES::opparamnum[opnum] = paramcount;
               MES::opsize[opnum] = insnsize;
-              //std::cout << narrow(opname) << " " << paramcount << " " << insnsize << std::endl;
             } else { // ERROR: op name not found
               
             }
@@ -1509,7 +1016,6 @@ void MES::init(std::wifstream& infile) {
   }
   
   for (size_t j = 0; j < idxparams.size(); j += 2) {
-    //std::wstring& paramname = idxparams[j];
     std::wstring& filepath = idxparams[j + 1];
     
     size_t oext = filepath.find_last_of(L'.');
@@ -1532,7 +1038,6 @@ void MES::init(std::wifstream& infile) {
     }
     MES::idxloadfailed.push_back(loadfailed);
     MES::idxenablenames.push_back(!loadfailed);
-            //std::cout << "index param " << narrow(paramname) << " for file " << npath << std::endl;
   }
   
   
