@@ -272,7 +272,7 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                   size_t num_params = MES::opparamnum[op];
                   size_t param_ofs = MES::opparamofs[op];
                   if (nospecial) {
-                    if (num_params && MES::opparamtypes[param_ofs] >= PARAM_INDEX) {
+                    if (num_params == 1 && MES::opparamtypes[param_ofs] >= PARAM_INDEX) {
                       size_t ptype = MES::opparamtypes[param_ofs];
                       size_t param_size = MES::paramsize[ptype];
                       size_t idx = 0;
