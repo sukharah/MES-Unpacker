@@ -46,12 +46,18 @@ Changes
 - Renamed several opcodes, fixed colors.
 - Added Kanji definitions for Harvest Moon: A Wonderful Life.
 - Added support for Harvest Moon: Another Wonderful Life
+- Fixed 32 byte alignment, added more bytecode names.
+- Fixed uppercase/trim to work with unicode, added PHRASE/STRING index parameters.
 
-The following files for Harvest Moon: Another Wonderful Life use a slightly different set and are
-not currently supported:
+The following files for Harvest Moon: Another Wonderful Life are corrupted and will not be supported:
 - All *_wife.mes files.
 - debug.mes
 - phrase.mes
+The files use a sequential mapping in order encountered in file to the Japanese characters from AWL.
+Characters beyond the range of the single byte text symbol mapping used in Another Wonderful Life are
+arbitrarily mapped to 2 bytes, which conflicts with lower message codes, making the encoding irreversible
+except through manual decoding. Aside from some haphazard English translations (and 'error') in debug.mes,
+there are no other changes in these files.
 
 Planned features/fixes:
 - Add error messages.

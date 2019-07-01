@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <utility>
 #include <codecvt>
+#include <cwctype>
 
 #ifdef DUPE
 const bool SEQ_DEDUPE = true;
@@ -92,8 +93,8 @@ std::string toUpper(std::string const& str) {
 }
 
 std::wstring trim(std::wstring const& str) {
-  std::wstring::const_iterator st = std::find_if_not(str.cbegin(), str.cend(), [](wchar_t c) {return std::isspace(c);}),
-                               ed = std::find_if_not(str.crbegin(), str.crend(), [](wchar_t c) {return std::isspace(c);}).base();
+  std::wstring::const_iterator st = std::find_if_not(str.cbegin(), str.cend(), [](wchar_t c) {return std::iswspace(c);}),
+                               ed = std::find_if_not(str.crbegin(), str.crend(), [](wchar_t c) {return std::iswspace(c);}).base();
   if (std::distance(str.cbegin(), st) > std::distance(str.cbegin(), ed))
     std::swap(st, ed);
   return std::wstring(st, ed);
@@ -144,7 +145,8 @@ bool ensureBuffer(std::ifstream& infile, char* buffer, size_t buffer_len, size_t
 
 std::wstring toUpper(std::wstring const& str) {
   std::wstring copy(str);
-  std::transform(std::begin(str), std::end(str), std::begin(copy), [](wchar_t c) { return std::toupper(c); });
+  std::ctype<wchar_t> const& facet = std::use_facet<std::ctype<wchar_t>>(std::locale());
+  facet.toupper(&copy[0], &copy[0] + copy.size());
   return copy;
 }
 
@@ -289,8 +291,6 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                       }
                       if (MES::idxenablenames[ptype - PARAM_INDEX] && idx < MES::idxlist[ptype - PARAM_INDEX].size()) {
                         message.append(MES::idxlist[ptype - PARAM_INDEX][idx]);
-                      } else {
-                        message.append(wprintNum(idx));
                       }
                     }
                   } else {
