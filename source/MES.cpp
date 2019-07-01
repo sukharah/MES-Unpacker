@@ -557,6 +557,12 @@ void MES::writeMES(std::ofstream& outfile) const {
   if (buffer_len)
     outfile.write(buffer, buffer_len);
   
+  if (data_ofs & 31) {
+    for (size_t i = 0; i < (-data_ofs & 31); ++i)
+      buffer[i] = 0;
+    outfile.write(buffer, -data_ofs & 31);
+  }
+  
   outfile.seekp(8, std::ios::beg);
   buffer_len = 0;
   for (size_t m = 0; m < this->messages.size(); ++m) {
