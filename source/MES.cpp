@@ -587,6 +587,8 @@ bool MES::readText(std::wifstream& infile) {
   bool messageline = true;
   while (std::getline(infile, line)) {
     size_t ofs;
+    if (!line.empty() && line[0] == L'\ufeff')
+      line.erase(0, 1);
     if (line.compare(0, 4, L"--- ") == 0 && (ofs = line.find(L"message ")) != std::string::npos) {
       if (messagenum) {
         if (messagenum > this->messages.size() + 1) {

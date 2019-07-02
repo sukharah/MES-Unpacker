@@ -42,13 +42,6 @@ processing the files. For example, for Harvest Moon: A Wonderful Life files, the
 specified as `data/anawl.txt`.
 
 ## Additional development/Notes
-Changes
-- Renamed several opcodes, fixed colors.
-- Added Kanji definitions for Harvest Moon: A Wonderful Life.
-- Added support for Harvest Moon: Another Wonderful Life
-- Fixed 32 byte alignment, added more bytecode names.
-- Fixed uppercase/trim to work with unicode, added PHRASE/STRING index parameters.
-
 The following files for Harvest Moon: Another Wonderful Life are corrupted and will not be supported:
 - All *_wife.mes files.
 - debug.mes
