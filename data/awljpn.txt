@@ -1,7 +1,7 @@
 #Symbols file in font.tpl order
-data/awl-symbols-jpn.txt
+data/charset/awl-symbols-jpn.txt
 #Single byte character mappings
-data/awl-chars.txt
+data/charset/awl-chars.txt
 
 #Forwards instruction mappings
 3 ENDPAGE
@@ -75,7 +75,7 @@ PARAM_PEOPLEID "data/awl/people.mes" PARAM_BYTE
 PARAM_CROPID "data/awl/farmcrop.mes" PARAM_SHORT
 PARAM_ITEMID "data/awl/item.mes" PARAM_SHORT
 PARAM_STRUCTUREID "data/awl/structure.mes" PARAM_BYTE
-PARAM_SFXID "data/SFXList.txt" PARAM_SHORT
+PARAM_SFXID "data/common/SFXList.txt" PARAM_SHORT
 PARAM_STRINGID "data/awl/string.mes" PARAM_SHORT
 PARAM_PHRASEID "data/awl/phrase.mes" PARAM_BYTE
 $

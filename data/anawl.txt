@@ -1,7 +1,7 @@
 #Symbols file
 $
 #Single byte character mappings
-data/anawl-chars.txt
+data/charset/anawl-chars.txt
 
 #Forwards instruction mappings
 3 ENDPAGE
@@ -59,7 +59,7 @@ PARAM_PEOPLEID "data/anawl/people.mes" PARAM_BYTE
 PARAM_CROPID "data/anawl/farmcrop.mes" PARAM_SHORT
 PARAM_ITEMID "data/anawl/item.mes" PARAM_SHORT
 PARAM_STRUCTUREID "data/anawl/structure.mes" PARAM_BYTE
-PARAM_SFXID "data/SFXList.txt" PARAM_SHORT
+PARAM_SFXID "data/common/SFXList.txt" PARAM_SHORT
 PARAM_STRINGID "data/anawl/string.mes" PARAM_SHORT
 $
 
