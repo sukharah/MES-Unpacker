@@ -1,7 +1,7 @@
 ## Purpose
 This program allows lossless conversion between MES dialog bytecode archives and a plaintext format
-for the game cube version of Harvest Moon: A Wonderful Life and
-Harvest Moon: Another Wonderful Life
+for the English and Japanese GameCube versions of Harvest Moon: A Wonderful Life and Harvest Moon: Another Wonderful Life,
+along with Harvest Moon: A Wonderful Life Special Edition.
 
 The text format is not intended to be compatible with other text formats, or other versions of this program,
 but should allow the corresponding version to generate a valid MES file so long as the editor is limited
@@ -36,10 +36,18 @@ To generate an MES file from the text file
 program.exe pack "./textinputfile.txt" "./mesoutputfile.mes" ["data/bytecodedef.txt"]
 ```
 
-The `data/bytecodedef.txt` file specifies which bytecode/character set definitions should be used for
-processing the files. For example, for Harvest Moon: A Wonderful Life files, the parameter should be
-`data/awl.txt`, which is the default value. For Harvest Moon: Another Wonderful Life it should be
-specified as `data/anawl.txt`.
+The `data/bytecodedef.txt` file specifies which bytecode/character set decoder definitions should be used for
+processing the files.
+
+The following decoders are defined:
+- `data/awl.txt` is the default decoder parameter, used to decode MES files from Harvest Moon: A Wonderful Life
+- `data/anawl.txt` decodes MES files from Harvest Moon: A Wonderful Life
+- `data/awlse.txt` for Harvest Moon: A Wonderful Life Special Edition for the PS2 (partial charset)
+- `data/awljpn.txt` for Bokujou Monogatari: Wonderful Life
+- `data/anawljpn.txt` for Bokujou Monogatari: Wonderful Life for Girls
+- `data/awljpn-eng.txt` for the Japanese games with English index parameter names.
+
+Only index parameter files differ between awljpn.txt and anawljpn.txt
 
 ## Additional development/Notes
 The following files for Harvest Moon: Another Wonderful Life are corrupted and will not be supported:

@@ -78,8 +78,8 @@ PARAM_CROPID "data/awl/farmcrop.mes" PARAM_SHORT "data/awl.txt"
 PARAM_ITEMID "data/awl/item.mes" PARAM_SHORT "data/awl.txt"
 PARAM_STRUCTUREID "data/awl/structure.mes" PARAM_BYTE "data/awl.txt"
 PARAM_SFXID "data/common/SFXList.txt" PARAM_SHORT
-PARAM_STRINGID "data/awl/string.mes" PARAM_SHORT "data/awl.txt"
-PARAM_PHRASEID "data/awl/phrase.mes" PARAM_BYTE "data/awl.txt"
+PARAM_STRINGID "data/awljpn/string.mes" PARAM_SHORT
+PARAM_PHRASEID "data/awljpn/phrase.mes" PARAM_BYTE
 $
 
 #Instruction parameters
