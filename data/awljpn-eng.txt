@@ -1,9 +1,9 @@
 #Endianness - GCN is MSB
 msb
-#Symbols file
-$
+#Symbols file in font.tpl order
+data/charset/awl-symbols-jpn.txt
 #Single byte character mappings
-data/charset/anawl-chars.txt
+data/charset/awl-chars.txt
 
 #Forwards instruction mappings
 3 ENDPAGE
@@ -16,7 +16,7 @@ data/charset/anawl-chars.txt
 22 COLORRGBA
 23 COLOR
 24 TEXTSIZE
-25 OP25
+25 RESETSIZE
 32 PEOPLE
 33 PREVINPUT
 35 DOGNAME
@@ -28,7 +28,7 @@ data/charset/anawl-chars.txt
 41 VAR
 42 GOLD
 43 STRUCTURE
-#44 PHRASE2
+44 PHRASE2
 45 PLAYERNAME
 48 PAUSE
 49 CLEAR
@@ -38,12 +38,28 @@ data/charset/anawl-chars.txt
 53 TEXTSPEED
 54 INSTANT
 55 OP55
-56 OP56
+56 PHRASE
 57 OP57
 64 CHOICEYN
 65 CHOICE
 80 FACE
 82 PAUSE2
+128 SYMBOL
+129 SYMBOL
+130 SYMBOL
+131 SYMBOL
+132 SYMBOL
+133 SYMBOL
+134 SYMBOL
+135 SYMBOL
+136 SYMBOL
+137 SYMBOL
+138 SYMBOL
+139 SYMBOL
+140 SYMBOL
+141 SYMBOL
+142 SYMBOL
+143 SYMBOL
 $
 
 #Colors
@@ -57,12 +73,13 @@ $
 $
 
 #File index parameters
-PARAM_PEOPLEID "data/anawl/people.mes" PARAM_BYTE
-PARAM_CROPID "data/anawl/farmcrop.mes" PARAM_SHORT
-PARAM_ITEMID "data/anawl/item.mes" PARAM_SHORT
-PARAM_STRUCTUREID "data/anawl/structure.mes" PARAM_BYTE
+PARAM_PEOPLEID "data/awl/people.mes" PARAM_BYTE "data/awl.txt"
+PARAM_CROPID "data/awl/farmcrop.mes" PARAM_SHORT "data/awl.txt"
+PARAM_ITEMID "data/awl/item.mes" PARAM_SHORT "data/awl.txt"
+PARAM_STRUCTUREID "data/awl/structure.mes" PARAM_BYTE "data/awl.txt"
 PARAM_SFXID "data/common/SFXList.txt" PARAM_SHORT
-PARAM_STRINGID "data/anawl/string.mes" PARAM_SHORT
+PARAM_STRINGID "data/awl/string.mes" PARAM_SHORT "data/awl.txt"
+PARAM_PHRASEID "data/awl/phrase.mes" PARAM_BYTE "data/awl.txt"
 $
 
 #Instruction parameters
@@ -70,7 +87,7 @@ ENDPAGE
 COLOR PARAM_COLORID
 COLORRGBA PARAM_RGBA
 TEXTSIZE PARAM_BYTE
-OP25
+RESETSIZE
 PEOPLE PARAM_PEOPLEID
 PREVINPUT PARAM_BYTE
 DOGNAME
@@ -82,7 +99,7 @@ STRING PARAM_STRINGID
 VAR PARAM_BYTE
 GOLD PARAM_BYTE PARAM_BYTE
 STRUCTURE PARAM_STRUCTUREID
-#PHRASE2 PARAM_PHRASEID
+PHRASE2 PARAM_PHRASEID
 PLAYERNAME
 PAUSE
 CLEAR
@@ -92,7 +109,7 @@ PLAYSFX PARAM_SFXID
 TEXTSPEED PARAM_BYTE
 INSTANT PARAM_BYTE
 OP55 PARAM_BYTE PARAM_BYTE PARAM_BYTE PARAM_BYTE
-OP56 PARAM_BYTE
+PHRASE PARAM_PHRASEID
 OP57
 CHOICEYN PARAM_BYTE
 CHOICE PARAM_BYTE PARAM_BYTE

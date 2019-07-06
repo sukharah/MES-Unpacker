@@ -1,3 +1,5 @@
+#Endianness - GCN is MSB
+msb
 #Symbols file in font.tpl order
 data/charset/awl-symbols-jpn.txt
 #Single byte character mappings
@@ -26,7 +28,7 @@ data/charset/awl-chars.txt
 41 VAR
 42 GOLD
 43 STRUCTURE
-44 OP44
+44 PHRASE2
 45 PLAYERNAME
 48 PAUSE
 49 CLEAR
@@ -71,13 +73,13 @@ $
 $
 
 #File index parameters
-PARAM_PEOPLEID "data/awl/people.mes" PARAM_BYTE
-PARAM_CROPID "data/awl/farmcrop.mes" PARAM_SHORT
-PARAM_ITEMID "data/awl/item.mes" PARAM_SHORT
-PARAM_STRUCTUREID "data/awl/structure.mes" PARAM_BYTE
+PARAM_PEOPLEID "data/awljpn/people.mes" PARAM_BYTE
+PARAM_CROPID "data/awljpn/farmcrop.mes" PARAM_SHORT
+PARAM_ITEMID "data/awljpn/item.mes" PARAM_SHORT
+PARAM_STRUCTUREID "data/awljpn/structure.mes" PARAM_BYTE
 PARAM_SFXID "data/common/SFXList.txt" PARAM_SHORT
-PARAM_STRINGID "data/awl/string.mes" PARAM_SHORT
-PARAM_PHRASEID "data/awl/phrase.mes" PARAM_BYTE
+PARAM_STRINGID "data/awljpn/string.mes" PARAM_SHORT
+PARAM_PHRASEID "data/awljpn/phrase.mes" PARAM_BYTE
 $
 
 #Instruction parameters
@@ -97,7 +99,7 @@ STRING PARAM_STRINGID
 VAR PARAM_BYTE
 GOLD PARAM_BYTE PARAM_BYTE
 STRUCTURE PARAM_STRUCTUREID
-OP44 PARAM_SHORT
+PHRASE2 PARAM_PHRASEID
 PLAYERNAME
 PAUSE
 CLEAR

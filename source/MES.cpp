@@ -14,35 +14,7 @@ const bool SEQ_DEDUPE = true;
 const bool SEQ_DEDUPE = false;
 #endif
 
-std::unordered_map<std::wstring, size_t> MES::displaymap;
-std::unordered_map<std::wstring, size_t> MES::singlemap;
-
-std::unordered_map<std::wstring, size_t> MES::parammap;
-
-std::vector<size_t> MES::paramsize;
-  
-std::unordered_map<std::wstring, size_t> MES::idxparammap;
-std::vector<std::unordered_map<std::wstring, size_t>> MES::idxmap;
-std::vector<std::vector<std::wstring>> MES::idxlist;
-std::vector<char> MES::idxenablenames;
-std::vector<char> MES::idxloadfailed;
-
-std::vector<unsigned char> MES::opsingle;
-
-std::vector<unsigned char> MES::opsize;
-std::vector<unsigned char> MES::opparamnum;
-std::vector<unsigned char> MES::opparamofs;
-std::vector<unsigned char> MES::opparamtypes;
-
-std::unordered_map<std::wstring, size_t> MES::opmap;
-
-std::vector<std::wstring> MES::displaylist;
-std::vector<std::wstring> MES::singlelist;
-
-std::vector<std::wstring> MES::oplist;
-
-std::unordered_map<size_t, std::wstring> MES::op2color;
-std::unordered_map<std::wstring, size_t> MES::color2op;
+std::unordered_map<std::wstring, MES::Decoder> MES::decoder_map;
 
 // base param types
 size_t const PARAM_BYTE = 0,
@@ -78,7 +50,7 @@ size_t toNumber(std::string const& str) {
   }
 }
 
-std::wstring widen(std::string const& str) {
+std::wstring widen(std::string const& str) { // naive unicode conversions (7 bit ascii)
   return std::wstring(str.begin(), str.end());
 }
 
@@ -150,6 +122,13 @@ std::wstring toUpper(std::wstring const& str) {
   return copy;
 }
 
+std::wstring toLower(std::wstring const& str) {
+  std::wstring copy(str);
+  std::ctype<wchar_t> const& facet = std::use_facet<std::ctype<wchar_t>>(std::locale());
+  facet.tolower(&copy[0], &copy[0] + copy.size());
+  return copy;
+}
+
 const size_t MAX_INST_SIZE = 7;
 const size_t MAX_PARAM_SIZE = 6;
 
@@ -171,10 +150,10 @@ std::wstring wprintNum(int v) {
   return ws;
 }
 
-std::wstring getColor(size_t colnum) {
-  std::unordered_map<size_t, std::wstring>::iterator it = MES::op2color.find(colnum);
+std::wstring getColor(size_t colnum, MES::Decoder& decoder) {
+  std::unordered_map<size_t, std::wstring>::iterator it = decoder.op2color.find(colnum);
   std::wstring colname;
-  if (it != MES::op2color.end()) {
+  if (it != decoder.op2color.end()) {
     colname = it->second;
   } else {
     colname = wprintNum(colnum);
@@ -182,13 +161,13 @@ std::wstring getColor(size_t colnum) {
   return colname;
 }
 
-size_t getColor(std::wstring const& colname) {
+size_t getColor(std::wstring const& colname, MES::Decoder& decoder) {
   size_t col = 0;
   if (isNumber(colname)){
     col = std::stoi(colname);
   } else {
-    std::unordered_map<std::wstring, size_t>::iterator it = MES::color2op.find(colname);
-    if (it != MES::color2op.end()) {
+    std::unordered_map<std::wstring, size_t>::iterator it = decoder.color2op.find(colname);
+    if (it != decoder.color2op.end()) {
       col = it->second;
     }
   }
@@ -203,23 +182,31 @@ std::wstring& makesafe(std::wstring& ws) {
   return ws;
 }
 
-bool MES::readMES(std::ifstream& infile, bool nospecial) {
+size_t readInt(char* array, bool msb) {
+  return msb ? array[0] << 24 | (array[1] & 0xff) << 16 | (array[2] & 0xff) << 8 | (array[3] & 0xff)
+         : (array[0] & 0xff) | (array[1] & 0xff) << 8 | (array[2] & 0xff) << 16 | array[3] << 24;
+}
+
+bool MES::readMES(std::ifstream& infile, std::wstring const& decoder_path, bool nospecial) {
+  MES::Decoder * decoder = MES::getDecoder(decoder_path);
+  
   char buffer[4096];
   infile.read(buffer, sizeof(buffer));
   size_t buffer_len = infile.gcount();
   size_t buffer_ofs = 8;
-  size_t signature = buffer[0] << 24 | (buffer[1] & 0xff) << 16 | (buffer[2] & 0xff) << 8 | (buffer[3] & 0xff);
+  size_t signature = readInt(buffer, decoder->isMSB);
+  bool validsig = (signature == 0xcdc3b0b0); // MC00
   
-  bool result = false;
+  bool result = validsig;
   
-  if (signature == 0xcdc3b0b0) {
-    size_t num_messages = buffer[4] << 24 | (buffer[5] & 0xff) << 16 | (buffer[6] & 0xff) << 8 | (buffer[7] & 0xff);
+  if (result) {
+    size_t num_messages = readInt(&buffer[4], decoder->isMSB);
     this->messages.resize(num_messages);
     size_t* offsets = new size_t[num_messages];
     result = true;
     for (size_t m = 0; result && m < num_messages; ++m) {
       if (ensureBuffer(infile, buffer, sizeof(buffer), buffer_ofs, buffer_len, 4)) {
-        offsets[m] = buffer[buffer_ofs] << 24 | (buffer[buffer_ofs + 1] & 0xff) << 16 | (buffer[buffer_ofs + 2] & 0xff) << 8 | (buffer[buffer_ofs + 3] & 0xff);
+        offsets[m] = readInt(&buffer[buffer_ofs], decoder->isMSB);
         buffer_ofs += 4;
       } else
         result = false;
@@ -245,36 +232,35 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
             result = false;
           }
           size_t op = buffer[buffer_ofs++] & 0xff;
-          size_t required_length = MES::opsize[op] - 1;
+          size_t required_length = decoder->opsize[op] - 1;
           if (!ensureBuffer(infile, buffer, sizeof(buffer), buffer_ofs, buffer_len, required_length)) {
             result = false;
           }
-          
           switch (op) {
             case 0x00:
               eom = true;
               break;
             default:{
-              if (MES::opsingle[op] == 1) {
-                if (!nospecial || MES::singlelist[op][0] != L'{')
-                  message.append(MES::singlelist[op]);
-              } else if (MES::opsingle[op] == 2) { // symbol
+              if (decoder->opsingle[op] == 1) {
+                if (!nospecial || decoder->singlelist[op][0] != L'{')
+                  message.append(decoder->singlelist[op]);
+              } else if (decoder->opsingle[op] == 2) { // symbol
                 size_t symbolidx = (op << 8 | (buffer[buffer_ofs] & 0xff)) & 0x0fff;
-                if (!nospecial || (!MES::displaylist[symbolidx].empty() && MES::displaylist[symbolidx][0] != L'{')) {
-                  message.append(MES::displaylist[symbolidx]);
+                if (!nospecial || (!decoder->displaylist[symbolidx].empty() && decoder->displaylist[symbolidx][0] != L'{')) {
+                  message.append(decoder->displaylist[symbolidx]);
                 }
               } else {
-                std::wstring const& opname = MES::oplist[op];
+                std::wstring const& opname = decoder->oplist[op];
                 if (opname.empty()) { // single character
                   if (!nospecial)
                     message.append(1, L'{').append(wprintNum(op)).append(1, L'}');
                 } else {
-                  size_t num_params = MES::opparamnum[op];
-                  size_t param_ofs = MES::opparamofs[op];
+                  size_t num_params = decoder->opparamnum[op];
+                  size_t param_ofs = decoder->opparamofs[op];
                   if (nospecial) {
-                    if (num_params == 1 && MES::opparamtypes[param_ofs] >= PARAM_INDEX) {
-                      size_t ptype = MES::opparamtypes[param_ofs];
-                      size_t param_size = MES::paramsize[ptype];
+                    if (num_params == 1 && decoder->opparamtypes[param_ofs] >= PARAM_INDEX) {
+                      size_t ptype = decoder->opparamtypes[param_ofs];
+                      size_t param_size = decoder->paramsize[ptype];
                       size_t idx = 0;
                       switch (param_size) {
                         case 4:
@@ -289,15 +275,15 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                         case 1:
                           idx |= (buffer[buffer_ofs + param_size - 1] & 0xff);
                       }
-                      if (MES::idxenablenames[ptype - PARAM_INDEX] && idx < MES::idxlist[ptype - PARAM_INDEX].size()) {
-                        message.append(MES::idxlist[ptype - PARAM_INDEX][idx]);
+                      if (decoder->idxenablenames[ptype - PARAM_INDEX] && idx < decoder->idxlist[ptype - PARAM_INDEX].size()) {
+                        message.append(decoder->idxlist[ptype - PARAM_INDEX][idx]);
                       }
                     }
                   } else {
                     message.append(1, L'{').append(opname);
                     for (size_t paramidx = 0, buffer_rel = buffer_ofs; paramidx < num_params; ++paramidx) {
-                      size_t paramtype = MES::opparamtypes[param_ofs + paramidx];
-                      size_t param_size = MES::paramsize[paramtype];
+                      size_t paramtype = decoder->opparamtypes[param_ofs + paramidx];
+                      size_t param_size = decoder->paramsize[paramtype];
                       message.append(1, L'-');
                       switch (paramtype) {
                         case PARAM_BYTE:
@@ -313,7 +299,7 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                           buffer_rel += 4;
                           break;
                         case PARAM_COLORID:
-                          message.append(getColor(op));
+                          message.append(getColor(op, *decoder));
                           break;
                         case PARAM_RGBA:
                           message.append(toHex(buffer[buffer_rel] << 24 | (buffer[buffer_rel + 1] & 0xff) << 16 |
@@ -335,8 +321,8 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
                             case 1:
                               idx |= (buffer[buffer_rel + param_size - 1] & 0xff);
                           }
-                          if (MES::idxenablenames[paramtype - PARAM_INDEX] && idx < MES::idxlist[paramtype - PARAM_INDEX].size() && !MES::idxlist[paramtype - PARAM_INDEX][idx].empty())
-                            message.append(MES::idxlist[paramtype - PARAM_INDEX][idx]);
+                          if (decoder->idxenablenames[paramtype - PARAM_INDEX] && idx < decoder->idxlist[paramtype - PARAM_INDEX].size() && !decoder->idxlist[paramtype - PARAM_INDEX][idx].empty())
+                            message.append(decoder->idxlist[paramtype - PARAM_INDEX][idx]);
                           else
                             message.append(wprintNum(idx));
                           buffer_rel += param_size;
@@ -370,18 +356,29 @@ bool MES::readMES(std::ifstream& infile, bool nospecial) {
   return result;
 }
 
-void MES::writeMES(std::ofstream& outfile) const {
+void writeInt(char* array, size_t ofs, size_t val, bool msb) {
+  if (msb) {
+    array[ofs] = val >> 24;
+    array[ofs + 1] = val >> 16;
+    array[ofs + 2] = val >> 8;
+    array[ofs + 3] = val;
+  } else {
+    array[ofs] = val;
+    array[ofs + 1] = val >> 8;
+    array[ofs + 2] = val >> 16;
+    array[ofs + 3] = val >> 24;
+  }
+}
+
+void MES::writeMES(std::ofstream& outfile, std::wstring const& decoder_path) const {
+  MES::Decoder * decoder = MES::getDecoder(decoder_path);
+  
   const size_t BUFFER_MAX = 4096 - (4 + MAX_INST_SIZE + 1);
   char buffer[4096];
-  buffer[0] = 0xcd;
-  buffer[1] = 0xc3;
-  buffer[2] = 0xb0;
-  buffer[3] = 0xb0;
-  buffer[4] = this->messages.size() >> 24;
-  buffer[5] = this->messages.size() >> 16;
-  buffer[6] = this->messages.size() >> 8;
-  buffer[7] = this->messages.size();
   
+  writeInt(buffer, 0, 0xcdc3b0b0u, decoder->isMSB);
+  writeInt(buffer, 4, this->messages.size(), decoder->isMSB);
+
   outfile.write(buffer, 8);
   size_t data_ofs = this->messages.size() * 4 + 8;
   size_t buffer_len = 0;
@@ -423,12 +420,12 @@ void MES::writeMES(std::ofstream& outfile) const {
             }
             params.clear();
             std::wstring opstr = message.substr(opstart, char_ofs - opstart);
-            std::unordered_map<std::wstring, size_t>::iterator it = MES::opmap.find(opstr);
-            if (it != MES::opmap.end()) {
+            std::unordered_map<std::wstring, size_t>::iterator it = decoder->opmap.find(opstr);
+            if (it != decoder->opmap.end()) {
               size_t op = it->second;
-              size_t size = MES::opsize[op];
+              size_t size = decoder->opsize[op];
               buffer[buffer_len] = op;
-              size_t expected_params = MES::opparamnum[op];
+              size_t expected_params = decoder->opparamnum[op];
               while (params.size() < expected_params && message[char_ofs] != '}') {
                 if (message[char_ofs] == '-')
                   ++char_ofs;
@@ -442,8 +439,8 @@ void MES::writeMES(std::ofstream& outfile) const {
               if (params.size() < expected_params) {
                 // error insufficient params
               } else {
-                for (size_t pidx = 0, pofs = MES::opparamofs[op], buffer_ofs = buffer_len + 1, pval; pidx < expected_params; ++pidx) {
-                  size_t ptype = MES::opparamtypes[pofs++];
+                for (size_t pidx = 0, pofs = decoder->opparamofs[op], buffer_ofs = buffer_len + 1, pval; pidx < expected_params; ++pidx) {
+                  size_t ptype = decoder->opparamtypes[pofs++];
                   switch (ptype) {
                     case PARAM_BYTE:
                       buffer[buffer_ofs++] = toNumber(params[pidx]);
@@ -455,7 +452,7 @@ void MES::writeMES(std::ofstream& outfile) const {
                       buffer_ofs += 2;
                       break;
                     case PARAM_COLORID:
-                      buffer[buffer_len] = getColor(params[pidx]);
+                      buffer[buffer_len] = getColor(params[pidx], *decoder);
                       break;
                     case PARAM_RGBA:
                       pval = toNumber(params[pidx]);
@@ -481,13 +478,13 @@ void MES::writeMES(std::ofstream& outfile) const {
                     default:{ // index param
                       size_t idxtype = ptype - PARAM_INDEX;
                       size_t idx;
-                      std::unordered_map<std::wstring, size_t>::iterator it2 = MES::idxmap[idxtype].find(params[pidx]);
-                      if (it2 != MES::idxmap[idxtype].end()) {
+                      std::unordered_map<std::wstring, size_t>::iterator it2 = decoder->idxmap[idxtype].find(params[pidx]);
+                      if (it2 != decoder->idxmap[idxtype].end()) {
                         idx = it2->second;
                       } else if (isNumber(params[pidx])) {
                         idx = toNumber(params[pidx]);
                       }
-                      size_t psize = MES::paramsize[ptype];
+                      size_t psize = decoder->paramsize[ptype];
                       switch (psize) {
                         case 4:
                           buffer[buffer_ofs + psize - 4] = idx >> 24;
@@ -512,8 +509,8 @@ void MES::writeMES(std::ofstream& outfile) const {
             } else {
               std::wstring skey;
               skey.append(1, L'{').append(opstr).append(1, L'}');
-              it = MES::displaymap.find(skey);
-              if (it != MES::displaymap.end()) {
+              it = decoder->displaymap.find(skey);
+              if (it != decoder->displaymap.end()) {
                 size_t index = it->second;
                 buffer[buffer_len] = 0x80 | (index >> 8 & 0x0f);
                 buffer[buffer_len + 1] = index;
@@ -529,13 +526,13 @@ void MES::writeMES(std::ofstream& outfile) const {
           char_ofs = last_bracket;
         } else {
           std::wstring ws(1, first_char);
-          std::unordered_map<std::wstring, size_t>::iterator it2 = MES::singlemap.find(ws);
-          if (it2 != MES::singlemap.end()) {
+          std::unordered_map<std::wstring, size_t>::iterator it2 = decoder->singlemap.find(ws);
+          if (it2 != decoder->singlemap.end()) {
             buffer[buffer_len++] = it2->second;
             ++data_ofs;
           } else {
-            std::unordered_map<std::wstring, size_t>::iterator it = MES::displaymap.find(ws);
-            if (it != MES::displaymap.end()) {
+            std::unordered_map<std::wstring, size_t>::iterator it = decoder->displaymap.find(ws);
+            if (it != decoder->displaymap.end()) {
               buffer[buffer_len] = 0x80 + (it->second >> 8 & 0x0f);
               buffer[buffer_len + 1] = it->second;
               buffer_len += 2;
@@ -570,17 +567,17 @@ void MES::writeMES(std::ofstream& outfile) const {
       outfile.write(buffer, buffer_len);
       buffer_len = 0;
     }
-    buffer[buffer_len] = offsets[m] >> 24;
-    buffer[buffer_len + 1] = offsets[m] >> 16;
-    buffer[buffer_len + 2] = offsets[m] >> 8;
-    buffer[buffer_len + 3] = offsets[m];
+    writeInt(buffer, buffer_len, offsets[m], decoder->isMSB);
     buffer_len += 4;
   }
   if (buffer_len)
     outfile.write(buffer, buffer_len);
 }
 
-bool MES::readText(std::wifstream& infile) {
+bool MES::readText(std::wifstream& infile, std::wstring const& decoder_path) {
+  MES::Decoder * decoder = MES::getDecoder(decoder_path);
+  (void)decoder;
+  
   std::wstring line;
   std::wstring message;
   size_t messagenum = 0;
@@ -630,7 +627,10 @@ bool MES::readText(std::wifstream& infile) {
   return true;
 }
 
-void MES::writeText(std::wofstream& outfile) const {
+void MES::writeText(std::wofstream& outfile, std::wstring const& decoder_path) const {
+  MES::Decoder * decoder = MES::getDecoder(decoder_path);
+  (void)decoder;
+  
   for (size_t i = 0; i < this->messages.size(); ++i) {
     if (i)
       outfile << std::endl;
@@ -639,15 +639,15 @@ void MES::writeText(std::wofstream& outfile) const {
   }
 }
 
-void MES::loadMES(std::string const& filepath, std::vector<std::wstring>& mlist, std::unordered_map<std::wstring, size_t>& mmap, bool& fail_flag) {
+void MES::loadMES(std::wstring const& decoder_path, std::string const& filepath, std::vector<std::wstring>& mlist, std::unordered_map<std::wstring, size_t>& mmap, bool& fail_flag) {
   std::ifstream mesfile;
   mesfile.open(filepath, std::ios_base::in | std::ios_base::binary);
   if (mesfile) {
     MES mes;
-    mes.readMES(mesfile, true);
+    mes.readMES(mesfile, decoder_path, true);
     mesfile.close();
     mlist.resize(mes.messages.size());
-    for (size_t i = 0; i < mes.messages.size(); ++i) {
+for (size_t i = 0; i < mes.messages.size(); ++i) {
       std::wstring upper = toUpper(trim(mes.messages[i]));
       if (mmap.count(upper)) {
         size_t sz = upper.size();
@@ -679,18 +679,21 @@ void MES::loadMES(std::string const& filepath, std::vector<std::wstring>& mlist,
 }
 
 void MES::loadList(std::string const& filepath, std::vector<std::wstring>& mlist, std::unordered_map<std::wstring, size_t>& mmap, bool& fail_flag) {
-  std::ifstream sfxfile;
+  std::wifstream sfxfile;
+  sfxfile.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>()));
   sfxfile.open(filepath);
   if (sfxfile) {
-    std::string line;
+    std::wstring line;
     while (std::getline(sfxfile, line) && !line.empty()) {
-      size_t col = line.find_first_of(':');
+      if (line[0] == L'\ufeff')
+        line.erase(0, 1);
+      size_t col = line.find_first_of(L':');
       size_t num = toNumber(trim(line.substr(0, col)));
-      size_t com = line.find_last_of(',');
+      size_t com = line.find_last_of(L',');
       if (com != std::string::npos)
         com -= col + 1;
-      std::string sfxname = trim(line.substr(col + 1, com));
-      std::wstring upper = toUpper(widen(sfxname));
+      std::wstring sfxname = trim(line.substr(col + 1, com));
+      std::wstring upper = toUpper(sfxname);
       mmap.insert(std::pair<std::wstring, size_t>(upper, num));
       if (mlist.size() <= num)
         mlist.resize(num + 1);
@@ -702,51 +705,55 @@ void MES::loadList(std::string const& filepath, std::vector<std::wstring>& mlist
   }
 }
 
-void MES::loadSymbols(std::wifstream& infile) {
+void MES::loadSymbols(std::wifstream& infile, MES::Decoder& decoder) {
   std::wstring line;
   while (std::getline(infile, line)) {
+    if (!line.empty() && line[0] == L'\ufeff')
+      line.erase(0, 1);
     for (size_t i = 0; i < line.length(); ++i) {
       wchar_t wc = line[i];
       if (wc == L'{') {
         size_t e = line.find_first_of(L'}', i + 2);
         if (e != std::string::npos) {
           std::wstring ws = line.substr(i, e + 1 - i);
-          MES::displaymap.insert(std::pair<std::wstring, size_t>(ws, MES::displaylist.size()));
-          MES::displaylist.push_back(ws);
+          decoder.displaymap.insert(std::pair<std::wstring, size_t>(ws, decoder.displaylist.size()));
+          decoder.displaylist.push_back(ws);
           i = e;
         } else { // ERROR: unterminated entity
           i = line.length();
         }
       } else if (wc == L' ') { // undefined character
         std::wstring ws = L"{SYMBOL-";
-        ws.append(wprintNum(MES::displaylist.size())).append(1, L'}');
-        MES::displaymap.insert(std::pair<std::wstring, size_t>(ws, MES::displaylist.size()));
-        MES::displaylist.push_back(ws);
+        ws.append(wprintNum(decoder.displaylist.size())).append(1, L'}');
+        decoder.displaymap.insert(std::pair<std::wstring, size_t>(ws, decoder.displaylist.size()));
+        decoder.displaylist.push_back(ws);
       } else {
         std::wstring ws(1, wc);
-        if (MES::displaymap.count(ws)) { // WARNING: duplicate character
+        if (decoder.displaymap.count(ws)) { // WARNING: duplicate character
           
         } else {
-          MES::displaymap.insert(std::pair<std::wstring, size_t>(ws, MES::displaylist.size()));
+          decoder.displaymap.insert(std::pair<std::wstring, size_t>(ws, decoder.displaylist.size()));
         }
-        MES::displaylist.push_back(ws);
+        decoder.displaylist.push_back(ws);
       }
     }
   }
-  while (MES::displaylist.size() < 0x1000) {
+  while (decoder.displaylist.size() < 0x1000) {
     std::wstring ws = L"{SYMBOL-";
-    ws.append(wprintNum(MES::displaylist.size())).append(1, L'}');
-    MES::displaymap.insert(std::pair<std::wstring, size_t>(ws, MES::displaylist.size()));
-    MES::displaylist.push_back(ws);
+    ws.append(wprintNum(decoder.displaylist.size())).append(1, L'}');
+    decoder.displaymap.insert(std::pair<std::wstring, size_t>(ws, decoder.displaylist.size()));
+    decoder.displaylist.push_back(ws);
   }
 }
 
-void MES::loadSingleByte(std::wifstream& infile) {
+void MES::loadSingleByte(std::wifstream& infile, MES::Decoder& decoder) {
   std::wstring line;
   size_t ofs = 0,
         size = 0;
   while (std::getline(infile, line)) {
     if (!line.empty()) {
+      if (line[0] == L'\ufeff')
+        line.erase(0, 1);
       if (size) { // add characters
         bool exact = false;
         if (line[0] == L'"' && line[line.size() - 1] == L'"') {
@@ -783,9 +790,9 @@ void MES::loadSingleByte(std::wifstream& infile) {
             size_t lend = line.find_first_of(L'}', lofs + 1);
             if (lend != std::string::npos) {
               std::wstring entity = line.substr(lofs, lend - lofs);
-              MES::opsingle[ofs] = true;
-              MES::singlemap.insert(std::pair<std::wstring, size_t>(entity, ofs));
-              MES::singlelist[ofs] = entity;
+              decoder.opsingle[ofs] = true;
+              decoder.singlemap.insert(std::pair<std::wstring, size_t>(entity, ofs));
+              decoder.singlelist[ofs] = entity;
               ++ofs;
               --size;
               lofs = lend + 1;
@@ -797,9 +804,9 @@ void MES::loadSingleByte(std::wifstream& infile) {
             --size;
           } else {
             std::wstring wcs(1, wc);
-            MES::opsingle[ofs] = 1;
-            MES::singlemap.insert(std::pair<std::wstring, size_t>(wcs, ofs));
-            MES::singlelist[ofs] = wcs;
+            decoder.opsingle[ofs] = 1;
+            decoder.singlemap.insert(std::pair<std::wstring, size_t>(wcs, ofs));
+            decoder.singlelist[ofs] = wcs;
             ++ofs;
             --size;
             ++lofs;
@@ -833,220 +840,262 @@ void MES::loadSingleByte(std::wifstream& infile) {
   }
 }
 
-void MES::init(std::wifstream& infile) {
-  if (MES::parammap.empty()) {
-    MES::parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_BYTE", PARAM_BYTE));
-    MES::paramsize.push_back(1);
-    MES::parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_SHORT", PARAM_SHORT));
-    MES::paramsize.push_back(2);
-    MES::parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_COLORID", PARAM_COLORID));
-    MES::paramsize.push_back(0);
-    MES::parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_RGBA", PARAM_RGBA));
-    MES::paramsize.push_back(4);
-    MES::parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_INT", PARAM_INT));
-    MES::paramsize.push_back(4);
-    MES::parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_SYMBOL", PARAM_SYMBOL));
-    MES::paramsize.push_back(1);
-  }
-  
-  MES::displaymap.clear();
-  MES::displaylist.clear();
-  
-  MES::opsingle.resize(256);
-  MES::singlemap.clear();
-  MES::singlelist.resize(256);
-  
-  std::wstring symbols_path;
-  std::wstring chars_path;
-  
-  size_t state = 0;
-  
-  std::wstring line;
-  
-  MES::oplist.resize(256);
+MES::Decoder* MES::getDecoder(std::wstring const& decoder_path) {
+  std::wstring const dpath_lower = toLower(decoder_path);
+  MES::Decoder * decoder_ptr = nullptr;
+  std::unordered_map<std::wstring, MES::Decoder>::iterator it = MES::decoder_map.find(dpath_lower);
+  if (it != MES::decoder_map.end()) {
+    decoder_ptr = &it->second;
+  } else {
+    std::wifstream infile;
+    infile.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>()));
+    infile.open(narrow(decoder_path));
+    if (!infile) {
+      std::wcout << L"Can't open file " << decoder_path << std::endl;
+    } else {
+      std::pair<std::unordered_map<std::wstring, MES::Decoder>::iterator, bool> insit = MES::decoder_map.insert(std::pair<std::wstring, MES::Decoder>(dpath_lower, MES::Decoder()));
+      MES::Decoder& decoder = insit.first->second;
+      decoder_ptr = &decoder;
+      decoder.parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_BYTE", PARAM_BYTE));
+      decoder.paramsize.push_back(1);
+      decoder.parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_SHORT", PARAM_SHORT));
+      decoder.paramsize.push_back(2);
+      decoder.parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_COLORID", PARAM_COLORID));
+      decoder.paramsize.push_back(0);
+      decoder.parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_RGBA", PARAM_RGBA));
+      decoder.paramsize.push_back(4);
+      decoder.parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_INT", PARAM_INT));
+      decoder.paramsize.push_back(4);
+      decoder.parammap.insert(std::pair<std::wstring, size_t>(L"PARAM_SYMBOL", PARAM_SYMBOL));
+      decoder.paramsize.push_back(1);
+      
+      //decoder.displaymap.clear();
+      //decoder.displaylist.clear();
+      
+      decoder.opsingle.resize(256);
+      //decoder.singlemap.clear();
+      decoder.singlelist.resize(256);
+      
+      std::wstring symbols_path;
+      std::wstring chars_path;
+      
+      size_t state = 0;
+      
+      std::wstring line;
+      
+      decoder.oplist.resize(256);
 
-  MES::opmap.clear();
-  
-  MES::opsize.resize(256);
-  MES::opparamnum.resize(256);
-  MES::opparamofs.resize(256);
-  MES::opparamtypes.clear();
-  
-  for (size_t i = 0; i < 256; ++i) {
-    MES::opparamofs[i] = 0;
-    MES::opsize[i] = 1;
-    MES::opparamnum[i] = 0;
-    MES::oplist[i] = L"";
-  }
-  
-  MES::op2color.clear();
-  MES::color2op.clear();
-  
-  std::vector<std::wstring> idxparams;
-  
-  while (std::getline(infile, line) && state < 6) {
-    if (!line.empty() && line[0] != L'#') {
-      switch (state) {
-        case 0: 
-          symbols_path = line;
-          state = 1;
-          break;
-        
-        case 1:
-          chars_path = line;
-          state = 2;
-          break;
-          
-        case 2: // opcode to entity
-          if (line != L"$") {
-            size_t d1 = line.find_first_of(L' ');
-            size_t d2 = line.find_first_not_of(L' ', d1);
-            
-            size_t opcode = toNumber(line.substr(0, d1));
-            std::wstring opname = trim(line.substr(d2));
-            if (opcode < 256) {
-              MES::oplist[opcode] = opname;
-              MES::opmap.insert(std::pair<std::wstring, size_t>(opname, opcode));
-              if (opname == L"SYMBOL") {
-                MES::opsingle[opcode] = 2;
-              }
-            }
-          } else
-            state = 3;
-          break;
-        
-        case 3: // colors
-          if (line != L"$") {
-            size_t d1 = line.find_first_of(L' ');
-            size_t d2 = line.find_first_not_of(L' ', d1);
-            size_t colornum = toNumber(line.substr(0, d1));
-            std::wstring colorname = trim(line.substr(d2));
-            if (colornum < 256) {
-              MES::op2color.insert(std::pair<size_t, std::wstring>(colornum, colorname));
-              MES::color2op.insert(std::pair<std::wstring, size_t>(colorname, colornum));
-            }
-          } else
-            state = 4;
-          break;
-        
-        case 4: // index parameters
-          if (line != L"$") {
-            size_t d1 = line.find_first_of(L' ');
-            size_t d2 = line.find_first_of(L'"', d1 + 1);
-            size_t d3 = line.find_first_of(L'"', d2 + 1);
-            size_t d4 = line.find_first_not_of(L' ', d3 + 1);
-            
-            std::wstring paramname = line.substr(0, d1);
-            std::wstring filepath = line.substr(d2 + 1, d3 - (d2 + 1));
-            std::wstring basetype = trim(line.substr(d4));
-            
-            idxparams.push_back(paramname);
-            idxparams.push_back(filepath);
-            
-            MES::parammap.insert(std::pair<std::wstring, size_t>(paramname, MES::parammap.size()));
-            size_t basetypeidx = PARAM_BYTE;
-            std::unordered_map<std::wstring, size_t>::iterator it = MES::parammap.find(basetype);
-            if (it != MES::parammap.end())
-              basetypeidx = it->second;
-            MES::paramsize.push_back(MES::paramsize[basetypeidx]);
-            
-          } else
-            state = 5;
-          break;
-          
-        case 5: // insn parameter list
-          if (line != L"$") {
-            size_t insnsize = 1;
-            size_t sofs = line.find_first_not_of(L' '),
-                   eofs = line.find_first_of(L' ', sofs + 1);
-            std::wstring opname = line.substr(sofs, eofs - sofs);
-            size_t opnum = 0;
-            std::unordered_map<std::wstring, size_t>::iterator it2 = MES::opmap.find(opname);
-            if (it2 != MES::opmap.end()) {
-              opnum = it2->second;
-              MES::opparamofs[opnum] = MES::opparamtypes.size();
-              size_t paramcount = 0;
-              while ((sofs = line.find_first_not_of(L' ', eofs + 1)) != std::string::npos) {
-                eofs = line.find_first_of(L' ', sofs + 1);
-                if (eofs == std::string::npos)
-                  eofs = line.size();
-                std::wstring paramname = line.substr(sofs, eofs - sofs);
-                std::unordered_map<std::wstring, size_t>::iterator it = MES::parammap.find(paramname);
-                if (it != MES::parammap.end()) { // ERROR: param name not found
-                  size_t paramsize = MES::paramsize[it->second];
-                  MES::opparamtypes.push_back(it->second);
-                  insnsize += paramsize;
-                  ++paramcount;
-                }
-              }
-              MES::opparamnum[opnum] = paramcount;
-              MES::opsize[opnum] = insnsize;
-            } else { // ERROR: op name not found
-              
-            }
-          } else
-            state = 5;
-          break;
+      //decoder.opmap.clear();
+      
+      decoder.opsize.resize(256);
+      decoder.opparamnum.resize(256);
+      decoder.opparamofs.resize(256);
+      //decoder.opparamtypes.clear();
+      
+      for (size_t i = 0; i < 256; ++i) {
+        decoder.opparamofs[i] = 0;
+        decoder.opsize[i] = 1;
+        decoder.opparamnum[i] = 0;
+        decoder.oplist[i] = L"";
       }
-    }
-  }
-  
-  for (size_t i = 0; i < 256; ++i) {
-    std::wstring opname = MES::oplist[i];
-    if (!opname.empty()) {
-      std::unordered_map<std::wstring, size_t>::iterator it2 = MES::opmap.find(opname);
-      if (it2 != MES::opmap.end()) {
-        size_t srcop = it2->second;
-        if (srcop != i) {
-          MES::opparamnum[i] = MES::opparamnum[srcop];
-          MES::opsize[i] = MES::opsize[srcop];
-          MES::opparamofs[i] = MES::opparamofs[srcop];
+      
+      //decoder.op2color.clear();
+      //decoder.color2op.clear();
+      
+      std::vector<std::wstring> idxparams;
+      
+      std::vector<std::wstring> idxparams2;
+      
+      while (std::getline(infile, line) && state < 7) {
+        if (!line.empty() && line[0] == L'\ufeff')
+          line.erase(0, 1);
+        if (!line.empty() && line[0] != L'#') {
+          switch (state) {
+            case 0:
+              decoder.isMSB = (toUpper(line) != L"LSB");
+              state = 1;
+              break;
+              
+            case 1: 
+              symbols_path = line;
+              state = 2;
+              break;
+            
+            case 2:
+              chars_path = line;
+              state = 3;
+              break;
+              
+            case 3: // opcode to entity
+              if (line != L"$") {
+                size_t d1 = line.find_first_of(L' ');
+                size_t d2 = line.find_first_not_of(L' ', d1);
+                
+                size_t opcode = toNumber(line.substr(0, d1));
+                std::wstring opname = trim(line.substr(d2));
+                if (opcode < 256) {
+                  decoder.oplist[opcode] = opname;
+                  decoder.opmap.insert(std::pair<std::wstring, size_t>(opname, opcode));
+                  if (opname == L"SYMBOL") {
+                    decoder.opsingle[opcode] = 2;
+                  }
+                }
+              } else
+                state = 4;
+              break;
+            
+            case 4: // colors
+              if (line != L"$") {
+                size_t d1 = line.find_first_of(L' ');
+                size_t d2 = line.find_first_not_of(L' ', d1);
+                size_t colornum = toNumber(line.substr(0, d1));
+                std::wstring colorname = trim(line.substr(d2));
+                if (colornum < 256) {
+                  decoder.op2color.insert(std::pair<size_t, std::wstring>(colornum, colorname));
+                  decoder.color2op.insert(std::pair<std::wstring, size_t>(colorname, colornum));
+                }
+              } else
+                state = 5;
+              break;
+            
+            case 5: // index parameters
+              if (line != L"$") {
+                idxparams2.clear();
+                size_t ofs = 0;
+                while (ofs < line.size() && idxparams2.size() < 4) {
+                  ofs = line.find_first_not_of(L' ', ofs);
+                  if (ofs != std::string::npos) {
+                    size_t eofs;
+                    bool isstr = (line[ofs] == L'"');
+                    if (isstr) {
+                      eofs = line.find_first_of(L'"', ++ofs);
+                    } else {
+                      eofs = line.find_first_of(L' ', ofs);
+                    }
+                    if (eofs == std::string::npos) {
+                      idxparams2.push_back(line.substr(ofs));
+                      ofs = line.size();
+                    } else {
+                      idxparams2.push_back(line.substr(ofs, eofs - ofs));
+                      ofs = eofs + isstr;
+                    }
+                  }
+                }
+                if (idxparams2.size() >= 3) {
+                  std::wstring paramname = idxparams2[0];
+                  std::wstring filepath = idxparams2[1];
+                  std::wstring basetype = idxparams2[2];
+                  std::wstring idxdpath = idxparams2.size() > 3 ? idxparams2[3] : decoder_path;
+                  
+                  idxparams.push_back(paramname);
+                  idxparams.push_back(filepath);
+                  idxparams.push_back(idxdpath);
+                  
+                  decoder.parammap.insert(std::pair<std::wstring, size_t>(paramname, decoder.parammap.size()));
+                  size_t basetypeidx = PARAM_BYTE;
+                  std::unordered_map<std::wstring, size_t>::iterator it = decoder.parammap.find(basetype);
+                  if (it != decoder.parammap.end()) // error, unrecognized base type
+                    basetypeidx = it->second;
+                  decoder.paramsize.push_back(decoder.paramsize[basetypeidx]);
+                }
+              } else
+                state = 6;
+              break;
+              
+            case 6: // insn parameter list
+              if (line != L"$") {
+                size_t insnsize = 1;
+                size_t sofs = line.find_first_not_of(L' '),
+                       eofs = line.find_first_of(L' ', sofs + 1);
+                std::wstring opname = line.substr(sofs, eofs - sofs);
+                size_t opnum = 0;
+                std::unordered_map<std::wstring, size_t>::iterator it2 = decoder.opmap.find(opname);
+                if (it2 != decoder.opmap.end()) {
+                  opnum = it2->second;
+                  decoder.opparamofs[opnum] = decoder.opparamtypes.size();
+                  size_t paramcount = 0;
+                  while ((sofs = line.find_first_not_of(L' ', eofs + 1)) != std::string::npos) {
+                    eofs = line.find_first_of(L' ', sofs + 1);
+                    if (eofs == std::string::npos)
+                      eofs = line.size();
+                    std::wstring paramname = line.substr(sofs, eofs - sofs);
+                    std::unordered_map<std::wstring, size_t>::iterator it = decoder.parammap.find(paramname);
+                    if (it != decoder.parammap.end()) { // ERROR: param name not found
+                      size_t paramsize = decoder.paramsize[it->second];
+                      decoder.opparamtypes.push_back(it->second);
+                      insnsize += paramsize;
+                      ++paramcount;
+                    }
+                  }
+                  decoder.opparamnum[opnum] = paramcount;
+                  decoder.opsize[opnum] = insnsize;
+                } else { // ERROR: op name not found
+                  
+                }
+              } else
+                state = 7;
+              break;
+          }
         }
       }
+      
+      for (size_t i = 0; i < 256; ++i) {
+        std::wstring opname = decoder.oplist[i];
+        if (!opname.empty()) {
+          std::unordered_map<std::wstring, size_t>::iterator it2 = decoder.opmap.find(opname);
+          if (it2 != decoder.opmap.end()) {
+            size_t srcop = it2->second;
+            if (srcop != i) {
+              decoder.opparamnum[i] = decoder.opparamnum[srcop];
+              decoder.opsize[i] = decoder.opsize[srcop];
+              decoder.opparamofs[i] = decoder.opparamofs[srcop];
+            }
+          }
+        }
+      }
+      std::wifstream wif;
+      wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>()));
+      if (symbols_path != L"$") {
+        wif.open(narrow(symbols_path));
+        if (wif) {
+          MES::loadSymbols(wif, decoder);
+          wif.close();
+        }
+      }
+      if (chars_path != L"$") {
+        wif.open(narrow(chars_path));
+        if (wif) {
+          MES::loadSingleByte(wif, decoder);
+          wif.close();
+        }
+      }
+      
+      for (size_t j = 0; j < idxparams.size(); j += 3) {
+        std::wstring& filepath = idxparams[j + 1];
+        std::wstring& idxdpath = idxparams[j + 2];
+        
+        size_t oext = filepath.find_last_of(L'.');
+        std::wstring ext;
+        
+        if (oext != std::string::npos)
+          ext = toUpper(filepath.substr(oext + 1));
+        
+        decoder.idxmap.emplace_back();
+        decoder.idxlist.emplace_back();
+        bool loadfailed = false;
+        std::string npath = narrow(filepath);
+        if (ext == L"TXT") {
+          MES::loadList(npath, decoder.idxlist.back(), decoder.idxmap.back(), loadfailed);
+        } else if (ext == L"MES") {
+          MES::loadMES(idxdpath, npath, decoder.idxlist.back(), decoder.idxmap.back(), loadfailed);
+        } else {
+          // ERROR: unrecognized file extension
+          loadfailed = true;
+        }
+        decoder.idxloadfailed.push_back(loadfailed);
+        decoder.idxenablenames.push_back(!loadfailed);
+      }
     }
   }
-  
-  std::wifstream wif;
-  wif.imbue(std::locale(std::locale(), new std::codecvt_utf8<wchar_t>()));
-  if (symbols_path != L"$") {
-    wif.open(narrow(symbols_path));
-    if (wif) {
-      MES::loadSymbols(wif);
-      wif.close();
-    }
-  }
-  if (chars_path != L"$") {
-    wif.open(narrow(chars_path));
-    if (wif) {
-      MES::loadSingleByte(wif);
-      wif.close();
-    }
-  }
-  
-  for (size_t j = 0; j < idxparams.size(); j += 2) {
-    std::wstring& filepath = idxparams[j + 1];
-    
-    size_t oext = filepath.find_last_of(L'.');
-    std::wstring ext;
-    
-    if (oext != std::string::npos)
-      ext = toUpper(filepath.substr(oext + 1));
-    
-    MES::idxmap.emplace_back();
-    MES::idxlist.emplace_back();
-    bool loadfailed = false;
-    std::string npath = narrow(filepath);
-    if (ext == L"TXT") {
-      MES::loadList(npath, MES::idxlist.back(), MES::idxmap.back(), loadfailed);
-    } else if (ext == L"MES") {
-      MES::loadMES(npath, MES::idxlist.back(), MES::idxmap.back(), loadfailed);
-    } else {
-      // ERROR: unrecognized file extension
-      loadfailed = true;
-    }
-    MES::idxloadfailed.push_back(loadfailed);
-    MES::idxenablenames.push_back(!loadfailed);
-  }
-  
-  
+  return decoder_ptr;
 }
