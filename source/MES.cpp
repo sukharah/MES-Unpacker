@@ -8,10 +8,15 @@
 #include <codecvt>
 #include <cwctype>
 
+#ifdef DUPE2
+const bool NSQ_DEDUPE = true;
+#else
+const bool NSQ_DEDUPE = false;  
 #ifdef DUPE
 const bool SEQ_DEDUPE = true;
 #else
 const bool SEQ_DEDUPE = false;
+#endif
 #endif
 
 std::unordered_map<std::wstring, MES::Decoder> MES::decoder_map;
@@ -386,15 +391,32 @@ void MES::writeMES(std::ofstream& outfile, std::wstring const& decoder_path) con
   size_t* offsets = new size_t[this->messages.size()];
   std::vector<std::wstring> params;
   
+  #ifdef DUPE2
+  std::unordered_map<std::wstring, size_t> prev_msg_ofs;
+  #endif
+  
   size_t prev_data_ofs = data_ofs;
   for (size_t i = 0; i < this->messages.size(); ++i) {
     std::wstring const& message = this->messages[i];
+    #ifdef DUPE2
+    std::unordered_map<std::wstring, size_t>::iterator it = prev_msg_ofs.find(message);
+    bool dupe = (it != prev_msg_ofs.end());
+    #else
     bool dupe = (SEQ_DEDUPE && this->messages[i - 1] == message);
+    #endif
     if (dupe) {
+      #ifdef DUPE2
+      prev_data_ofs = it->second;
+      #endif
       offsets[i] = prev_data_ofs;
     } else {
+      #ifdef DUPE2
+      prev_msg_ofs.insert(std::pair<std::wstring, size_t>(message, data_ofs));
+      #endif
       offsets[i] = data_ofs;
+      #ifndef DUPE2
       prev_data_ofs = data_ofs;
+      #endif
       for (size_t char_ofs = 0; char_ofs < message.size(); ++char_ofs) {
         if (buffer_len > BUFFER_MAX) {
           outfile.write(buffer, buffer_len);
